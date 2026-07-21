@@ -1,114 +1,244 @@
 # Shomer
 
-**X Layer Ship Gate — deployment policy verification for founders and agents.**
+**X Layer Ship Gate** — verify that a live deployment still matches the policy you approved.
 
-> Shomer verifies that your real deployment matches the security policy you approved.
+[![OKX.AI ASP](https://img.shields.io/badge/OKX.AI-ASP%20%236117-0B1A12?style=flat-square)](https://www.okx.ai)
+[![Chain](https://img.shields.io/badge/X%20Layer-196-2e7b54?style=flat-square)](https://www.okx.com/xlayer)
+[![A2MCP](https://img.shields.io/badge/A2MCP-free%20%2B%20paid-c8e562?style=flat-square&labelColor=14281d)](#agent-api-a2mcp)
 
-It is **not** an AI smart-contract auditor. It does not claim contracts are safe. It does not replace a human audit.
+Agents and founders call Shomer **before they ship or trust** a contract:
 
-## MVP scope
+> Is this the deployment we approved — owner, Safe, upgrades, timelock, implementation — **right now** on X Layer?
 
-- **EVM only** — X Layer mainnet (`196`) and testnet (`1952`)
-- **Contract-address first** — paste a live address, declare a Launch Manifest, run checks
-- **Real onchain reads** via [viem](https://viem.sh) against public X Layer RPCs
-- **LocalStorage only** for the manifest and last scan (no auth, no database)
-- **Verdicts:** Blocked · Review Required · Policy Matched  
-  Never “safe” or “audited.”
+**Not an audit. Not “safe.”**  
+Verdicts are only **Blocked** · **Review Required** · **Policy Matched**, with evidence. Empty rules are skipped; missing evidence never becomes a pass.
 
-## Deterministic checks (v1)
-
-| Check | Evidence |
+| | |
 | --- | --- |
-| Chain / deployer | `eth_chainId` + OKLink creation-info via **server proxy** (`OKLINK_API_KEY`) or public fallback |
-| Owner / Safe | `owner()`, Safe `getThreshold` / `getOwners` |
-| Upgrade authority | EIP-1967 admin / implementation slots |
-| Timelock | `getMinDelay()` on owner/admin candidates |
-| Implementation / code hash | EIP-1967 + `keccak256(bytecode)` |
-| Initializer sealed | `initialized()` / OZ storage when readable |
-| Address sanity | zero/dead/no-code/chain mismatch |
-| Verification status | Sourcify API (unknown/unverified → skip/review) |
-| Optional getters | `feeRecipient`, `treasury`, `oracle`, `router` when present |
+| **Live UI** | [shomer-ui.pages.dev](https://shomer-ui.pages.dev) |
+| **Live API** | [shomer-agent-api.mixed-mouse.workers.dev](https://shomer-agent-api.mixed-mouse.workers.dev/api/agent) |
+| **ASP** | #6117 on OKX.AI |
 
-If a pattern cannot be read reliably, the check is **Evidence missing** (declared/required) or **Out of scope** (undeclared/optional/N/A), or **Review Required** with the gap stated. Results are never fabricated. Evidence missing blocks **Policy Matched**.
+---
 
+## Why it exists
+
+Launch teams and agents still answer “is this the right deploy?” by hand: explorer tabs, RPC calls, Safe UI, proxy slots, sticky notes.
+
+Shomer turns that into a **deterministic ship gate**:
+
+1. Read **live** X Layer state (real RPC, no mocks).  
+2. Hold a **locked rules** snapshot (what you approved).  
+3. Compare and return a structured verdict + evidence agents can act on.
+
+**Time saved:** one JSON call instead of a multi-tab scavenger hunt.  
+**Honesty:** import from chain never auto-approves; blanks are out of scope, not green checks.
+
+---
 
 ## Free vs Paid
 
-See [docs/FREE-VS-PAID.md](./docs/FREE-VS-PAID.md).
+Full detail: [docs/FREE-VS-PAID.md](./docs/FREE-VS-PAID.md)
 
-| Tier | What you get |
-| --- | --- |
-| **Free** | packs, read, draft, verify, **ship-gate** — verdict + evidence + policyHash |
-| **Paid** | **Deep Verification** — privilegeMap + artifactComparison + auditorBrief (x402 on X Layer) |
+| | **Free — Ship Gate** | **Paid — Deep Verification** |
+| --- | --- | --- |
+| **For** | Everyday agent automation | Evidence packages for humans / serious handoff |
+| **Endpoints** | `packs` · `read` · `draft` · `verify` · `ship-gate` | `verify/paid` only |
+| **Payment** | None | x402 · **USDC on X Layer** (`eip155:196`) · ~$0.01 |
+| **You get** | Verdict, coverage, per-check evidence, facts, `policyHash` | Same core engine **plus** privilege map, reviewed artifact/code-hash compare, auditor brief (JSON + Markdown) |
+| **Not** | Auto-approval or “safe” claims | A second truth engine or LLM audit |
 
-## Agent quickstart (OKX.AI ASP #6117)
+Use **free** to decide “blocked or not.”  
+Use **paid** when you need the privilege graph, Foundry-style artifact match, or a shareable brief.
 
-Listed on **OKX.AI**. Free A2MCP (always-on Worker):
+---
 
-```bash
-curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify \
-  -H 'Content-Type: application/json' \
-  -d '{"network":"mainnet","contractAddress":"0xcA11bde05977b3631167028862bE2a173976CA11","policy":{"upgradeable":false}}'
-```
-
-| Endpoint | URL |
-| --- | --- |
-| Catalog | `GET https://shomer-agent-api.mixed-mouse.workers.dev/api/agent` |
-| Free verify | `POST …/api/agent/verify` |
-| Paid Deep Verification (x402, X Layer USDC) | `POST …/api/agent/verify/paid` |
-
-Verdicts: **Blocked** · **Review Required** · **Policy Matched**. Not an audit. Never “safe.”
-
-## Develop
+## Quick start (founders)
 
 ```bash
 npm install
-cp .env.example .env   # optional: set OKLINK_API_KEY for authenticated deployer
+cp .env.example .env   # optional: OKLINK_API_KEY, X402_* for paid locally
 npm run dev
 ```
 
-Open the URL Vite prints (default http://localhost:4173).
+Open the URL Vite prints (default [http://localhost:4173](http://localhost:4173)).
 
-**OKLink deployer:** put `OKLINK_API_KEY` in `.env` (never `VITE_*`).  
-Vite serves `GET /api/oklink/creation-info` on dev/preview; the key stays on the server.
+**In plain English:**
 
-**A2MCP agent APIs (OKX.AI ASP):**
-
-| Endpoint | Tier |
+| Step | What you do |
 | --- | --- |
-| `GET /api/agent` | Catalog |
-| `POST /api/agent/verify` | Free |
-| `POST /api/agent/verify/paid` | x402 paid Deep Verification on **X Layer** (`X402_PAY_TO`) |
+| **1 · On chain** | Paste an X Layer address → read what’s deployed now |
+| **2 · Your rules** | Write what you approved (or copy from chain / use a template) |
+| **3 · Lock in** | Freeze immutable rules `vN` — required before check |
+| **4 · Check** | Compare live chain to locked rules → verdict + brief |
 
-Paid calls add a bounded multi-contract privilege map, optional reviewed
-runtime artifact/code-hash comparison, and an auditor-ready evidence brief in
-JSON and Markdown. Existing free request bodies remain valid.
+Public UI (static): [shomer-ui.pages.dev](https://shomer-ui.pages.dev)  
+Redeploy UI: `npm run pages:deploy`
 
-**Cloudflare Workers (recommended, free always-on):**
+---
+
+## Agent API (A2MCP)
+
+**Base:** `https://shomer-agent-api.mixed-mouse.workers.dev`  
+**Catalog:** `GET /api/agent`
+
+### Free tools
+
+| Tool | Method | Path |
+| --- | --- | --- |
+| Catalog | `GET` | `/api/agent` |
+| List policy packs | `GET` | `/api/agent/packs` |
+| Read deployment state | `POST` | `/api/agent/read` |
+| Create policy draft | `POST` | `/api/agent/draft` |
+| Verify | `POST` | `/api/agent/verify` |
+| Ship gate (draft + verify) | `POST` | `/api/agent/ship-gate` |
 
 ```bash
+# Free verify
+curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network": "mainnet",
+    "contractAddress": "0xcA11bde05977b3631167028862bE2a173976CA11",
+    "policy": { "upgradeable": false },
+    "projectName": "demo"
+  }'
+
+# Free ship-gate (optional pack + fill from live + verify)
+curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/ship-gate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network": "mainnet",
+    "contractAddress": "0x…",
+    "packId": "simple_ownable",
+    "fillFromLive": true
+  }'
+```
+
+Inspect `verdict`, `shipGate.allowed` / `shipGate.recommendation`, `policyHash`, and `results[].evidence`.
+
+**Packs:** `simple_ownable` · `safe_governed` · `uups_proxy` · `transparent_proxy` · `erc20_launch`  
+(draft only — never auto-approved)
+
+### Paid Deep Verification
+
+```bash
+# Expect HTTP 402 without payment; settle x402 on X Layer USDC, then retry
+curl -i -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network": "mainnet",
+    "contractAddress": "0x…",
+    "policy": { "upgradeable": true, "owner": "0x…" },
+    "reviewedArtifact": {
+      "name": "Reviewed implementation",
+      "implementationAddress": "0x…",
+      "implementationCodeHash": "0x…"
+    }
+  }'
+```
+
+Paid body may also include `relatedContracts` and Foundry-style `deployedBytecode`.  
+Response includes `deepVerification`: `{ privilegeMap, artifactComparison, auditorBrief }`.
+
+Agent playbook: [docs/AGENT-SKILL.md](./docs/AGENT-SKILL.md)
+
+---
+
+## What Shomer checks
+
+Deterministic policy engine — no LLM guessing.
+
+| Area | Evidence |
+| --- | --- |
+| Chain / deployer | `eth_chainId` + OKLink creation-info (server proxy when keyed) |
+| Owner / Safe | `owner()`, Safe threshold & owners |
+| Upgrade authority | EIP-1967 admin / implementation; UUPS signals |
+| Timelock | `getMinDelay()` on candidates |
+| Implementation / code hash | EIP-1967 + `keccak256(bytecode)` |
+| Initializer | Common Initializable patterns when readable |
+| Address sanity | Zero / dead / no-code flags |
+| Source verification | Sourcify (unverified → review, not fake pass) |
+| Optional integrations | fee, treasury, oracle, router, factory, pool, mint/supply, … |
+
+**Skip honesty**
+
+- **Out of scope** — rule not declared  
+- **Evidence missing** — declared but unreadable → blocks **Policy Matched**  
+- Results are never fabricated  
+
+---
+
+## Stack
+
+| Layer | Tech |
+| --- | --- |
+| Founder UI | Vite + TypeScript, LocalStorage only |
+| Chain reads | [viem](https://viem.sh) → X Layer RPC |
+| Policy engine | Pure TS (`src/lib/policy`) |
+| Always-on API | Cloudflare Worker (`workers/agent-api`) |
+| Public UI host | Cloudflare Pages (`shomer-ui`) |
+| Paid settlement | x402 USDC on **X Layer** (not Base) |
+
+---
+
+## Develop & deploy
+
+```bash
+npm install
+cp .env.example .env
+npm run dev          # UI + local agent/OKLink middleware
+npm run build
+npm run preview
+
+# Always-on agent API
 npx wrangler login
 npm run worker:deploy
-# secrets: npx wrangler secret put OKLINK_API_KEY --config workers/agent-api/wrangler.toml
+# secrets (server-only, never VITE_*):
+#   npx wrangler secret put OKLINK_API_KEY --config workers/agent-api/wrangler.toml
+#   npx wrangler secret put X402_PAY_TO --config workers/agent-api/wrangler.toml
+
+# Public UI
+npm run pages:deploy
 ```
 
-See [docs/ASP.md](./docs/ASP.md).
+See [`.env.example`](./.env.example) and [docs/ASP.md](./docs/ASP.md).
+
+### Tests & smoke
 
 ```bash
-npm run build
-npm run preview   # also mounts the OKLink proxy
+npm run test:engine    # pure policy fixtures
+npm run test:paid      # Deep Verification fixtures
+npm run case:blocked   # mainnet wrong-owner → Blocked
+npm run smoke          # live RPC sample
+npm run smoke:agent    # agent verify smoke
 ```
 
-## Founder loop
+---
 
-1. **Read live state** — real X Layer RPC; shows privilege map. No policy verdict yet.
-2. **Fill draft from live** (optional) — seeds an *editable draft* only. Never auto-approves. Never means Policy Matched.
-3. **Edit draft** — fields show **IMPORTED** vs **FOUNDER** provenance.
-4. **Approve manifest vN** — freezes an immutable snapshot. Required before verify.
-5. **Verify vs approved** — compares live state only to the approved version.
-6. Export **Auditor Brief** for a human reviewer.
+## Docs
+
+| Doc | Contents |
+| --- | --- |
+| [FREE-VS-PAID.md](./docs/FREE-VS-PAID.md) | Tier split |
+| [AGENT-SKILL.md](./docs/AGENT-SKILL.md) | Playbook for other agents |
+| [ASP.md](./docs/ASP.md) | A2MCP / Workers / x402 |
+| [ASP-LISTING.md](./docs/ASP-LISTING.md) | Marketplace listing copy |
+| [DEMO-AND-X-POST.md](./docs/DEMO-AND-X-POST.md) | Demo script + #OKXAI post |
+| [case-studies/blocked-owner-mismatch.md](./docs/case-studies/blocked-owner-mismatch.md) | Public Blocked example |
+
+---
 
 ## Disclaimer
 
-Shomer compares declared policy to observable deployment facts.  
-A **Policy Matched** verdict means evaluated hard policies agreed with onchain state at a given block — not that the protocol is safe or audited.
+Shomer compares **declared policy** to **observable onchain facts** at a given block.
+
+**Policy Matched** means the hard rules that could be evaluated agreed with live state — **not** that the protocol is safe, correct, or audited.  
+**Blocked** means do not treat the deployment as matching what you approved.  
+Shomer does not replace a human security review.
+
+---
+
+## License
+
+Private / project default unless otherwise stated. Built for **OKX.AI Genesis** · ASP **#6117** · X Layer.
