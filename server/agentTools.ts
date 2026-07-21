@@ -12,7 +12,7 @@ import {
   seedDraftFromPack,
   type PolicyPackId,
 } from '../src/lib/policy/packs';
-import { emptyManifest, type ManifestFields, type NetworkId } from '../src/lib/policy/types';
+import { emptyManifest, type ManifestFields, type NetworkId, type ObservedFacts } from '../src/lib/policy/types';
 import { suggestedProjectName } from '../src/lib/utils/tokenLabel';
 import { normalizeAddress } from '../src/lib/utils/address';
 
@@ -140,6 +140,8 @@ export async function runAgentCreateDraft(input: {
   fillFromLive?: boolean;
   overrides?: Partial<ManifestFields>;
   blockNumber?: number | string;
+  /** Reuse a preloaded facts snapshot (avoids a second RPC round-trip). */
+  facts?: ObservedFacts;
 }): Promise<{ status: number; body: Record<string, unknown> }> {
   const network = parseNetwork(input.network) as NetworkId;
   const addr = input.contractAddress ? normalizeAddress(input.contractAddress) : null;
@@ -196,11 +198,23 @@ export async function runAgentCreateDraft(input: {
       blockNumber = n;
     }
     try {
-      const facts = await readFacts({ network, contractAddress: addr, blockNumber });
+      const facts =
+        input.facts ??
+        (await readFacts({ network, contractAddress: addr, blockNumber }));
       sourceBlock = facts.blockNumber;
       const { fields } = draftFieldsFromFacts(facts, draft);
-      // Keep pack defaults for keys pack cares about if live didn't set them
       draft = fields;
+      // Explicit overrides ALWAYS win over live import (approved-policy integrity)
+      if (input.overrides) {
+        for (const [k, v] of Object.entries(input.overrides)) {
+          if (v === undefined) continue;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (draft as any)[k] = v;
+        }
+      }
+      if (input.projectName?.trim()) {
+        draft.projectName = input.projectName.trim();
+      }
       filledFromLive = true;
       if (!draft.projectName) {
         draft.projectName =

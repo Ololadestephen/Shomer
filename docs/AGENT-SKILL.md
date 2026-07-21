@@ -45,7 +45,31 @@ POST /api/agent/verify/paid  → Deep Verification (x402)
 
 ### One-shot free ship-gate
 
+**Integrity rules (important):**
+
+- `fillFromLive` only builds a **draft suggestion** for founders — it is **never** the policy used for the verdict.
+- Verification uses **pack defaults + your explicit `policy` fields only**.
+- `shipGate.allowed === true` only when `verdict === "policy_matched"` **and** you supplied an **explicit approved policy** (`approvedPolicy: true` with real fields like `owner` / Safe / impl — not pack defaults alone).
+- **Review Required ⇒ allowed false.**
+- One chain read per request (`chainReads: 1`).
+
 ```bash
+# Clear to ship only with a locked/approved policy body
+curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/ship-gate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network": "mainnet",
+    "contractAddress": "0x…",
+    "approvedPolicy": true,
+    "policy": {
+      "upgradeable": false,
+      "owner": "0x…approved-owner…"
+    }
+  }'
+```
+
+```bash
+# Optional: also return a live-filled draft for humans (not used for the verdict)
 curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/ship-gate \
   -H 'Content-Type: application/json' \
   -d '{
@@ -53,11 +77,12 @@ curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/ship
     "contractAddress": "0x…",
     "packId": "simple_ownable",
     "fillFromLive": true,
-    "options": { "undeclaredObserved": "out_of_scope" }
+    "approvedPolicy": true,
+    "policy": { "upgradeable": false, "owner": "0x…approved-owner…" }
   }'
 ```
 
-Inspect: `shipGate.allowed`, `shipGate.recommendation`, `verdict`, `policyHash`, `results[].evidence`.
+Inspect: `shipGate.allowed`, `shipGate.explicitApprovedPolicy`, `shipGate.recommendation`, `verificationPolicy`, `chainReads`, `policyHash`, `results[].evidence`.
 
 ---
 

@@ -12,6 +12,7 @@
     "smoke:agent": "npx vite-node scripts/smoke-agent.ts",
     "test:engine": "npx vite-node scripts/test-engine-fixtures.ts",
     "test:paid": "npx vite-node scripts/test-paid-verification.ts",
+    "test:ship-gate": "npx vite-node scripts/test-ship-gate.ts",
     "worker:dev": "wrangler dev --config workers/agent-api/wrangler.toml",
     "worker:deploy": "wrangler deploy --config workers/agent-api/wrangler.toml",
     "worker:tail": "wrangler tail --config workers/agent-api/wrangler.toml",

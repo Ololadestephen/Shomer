@@ -16,6 +16,7 @@ import {
   type EvidenceRecord,
   type ManifestFields,
   type NetworkId,
+  type ObservedFacts,
 } from '../src/lib/policy/types';
 import {
   listPolicyPresets,
@@ -227,9 +228,18 @@ function parseOptions(raw: AgentVerifyOptions | undefined): {
   };
 }
 
+export type RunAgentVerifyOptions = {
+  /**
+   * Reuse a preloaded ObservedFacts snapshot (same block) to avoid a second
+   * full chain read — used by ship-gate composite.
+   */
+  facts?: ObservedFacts;
+};
+
 export async function runAgentVerify(
   input: AgentVerifyRequest,
   tier: 'free' | 'paid',
+  runOpts?: RunAgentVerifyOptions,
 ): Promise<{ status: number; body: AgentVerifyResponse }> {
   const network = parseNetwork(input.network);
   const addr = normalizeAddress(input.contractAddress ?? '');
@@ -312,11 +322,13 @@ export async function runAgentVerify(
   }
 
   try {
-    const facts = await readFacts({
-      network,
-      contractAddress: addr,
-      blockNumber: requestedBlock,
-    });
+    const facts =
+      runOpts?.facts ??
+      (await readFacts({
+        network,
+        contractAddress: addr,
+        blockNumber: requestedBlock,
+      }));
     const preset = resolvePolicyPreset(input.policyPreset);
     const presetId = preset ? input.policyPreset!.trim().toLowerCase().replace(/-/g, '_') : null;
     if (input.policyPreset && !preset) {
