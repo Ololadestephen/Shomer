@@ -1,0 +1,20 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+.env
+.env.*
+!.env.example
+.wrangler
+.wrangler-dist
+.dev.vars
+
+# Local screenshots
+Screenshot*.png
+Screenshot*.jpg
+
+# Demo intermediates / large work files (keep final cuts if small enough; ignore workdir)
+docs/demo/hyper_work/
+docs/demo/*.mp4
+docs/demo/**/*.mp4

@@ -1,0 +1,31 @@
+{
+  "name": "shomer-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "smoke": "npx vite-node scripts/smoke.ts",
+    "smoke:agent": "npx vite-node scripts/smoke-agent.ts",
+    "test:engine": "npx vite-node scripts/test-engine-fixtures.ts",
+    "test:paid": "npx vite-node scripts/test-paid-verification.ts",
+    "worker:dev": "wrangler dev --config workers/agent-api/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config workers/agent-api/wrangler.toml",
+    "worker:tail": "wrangler tail --config workers/agent-api/wrangler.toml",
+    "pages:deploy": "npm run build && npx wrangler pages deploy dist --project-name=shomer-ui",
+    "case:blocked": "npx vite-node scripts/case-blocked-owner.ts"
+  },
+  "dependencies": {
+    "viem": "^2.31.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-node": "^6.0.0",
+    "wrangler": "^4.111.0"
+  }
+}

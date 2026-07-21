@@ -1,0 +1,10 @@
+# Optional: Cloudflare Pages-style static deploy of Vite dist/
+# Build: npm run build
+# Deploy UI: npx wrangler pages deploy dist --project-name=shomer-ui
+#
+# Point the browser at the Worker API (already public):
+#   https://shomer-agent-api.mixed-mouse.workers.dev
+#
+# After first Pages deploy, set custom domain in Cloudflare dashboard if desired.
+name = "shomer-ui"
+compatibility_date = "2026-07-19"

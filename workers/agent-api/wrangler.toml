@@ -1,0 +1,27 @@
+# Shomer A2MCP agent API on Cloudflare Workers (free + paid verify)
+name = "shomer-agent-api"
+main = "src/index.ts"
+compatibility_date = "2026-07-19"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+head_sampling_rate = 0.1
+
+# Free plan caps CPU at 10ms (I/O wait on RPC does not count as CPU).
+# Raise only after upgrading to Workers Paid if needed:
+# [limits]
+# cpu_ms = 50
+
+[vars]
+# Non-secret defaults (override per env)
+X402_NETWORK = "xlayer"
+X402_PRICE_USD = "0.01"
+X402_ASSET = "USDC"
+X402_DEV_BYPASS = "0"
+SERVICE_NAME = "shomer"
+
+# Secrets (set via CLI — never commit):
+#   npx wrangler secret put OKLINK_API_KEY
+#   npx wrangler secret put X402_PAY_TO
+#   npx wrangler secret put X402_FACILITATOR_URL   # optional

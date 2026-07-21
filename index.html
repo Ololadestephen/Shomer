@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0c1613" />
+    <title>Shomer — X Layer Ship Gate · deployment policy verification</title>
+    <meta
+      name="description"
+      content="Shomer is the X Layer Ship Gate: agents and founders verify live deployments against the policy you approved. Free verify · Paid Deep Verification. Not an audit. Never safe."
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <section class="landing" id="landing">
+      <div class="landing-art" aria-hidden="true">
+        <div class="art-stage">
+          <div class="art-base"></div>
+          <div class="art-fins">
+            <i class="fin f1"></i><i class="fin f2"></i><i class="fin f3"></i><i class="fin f4"></i>
+            <i class="fin f5"></i><i class="fin f6"></i><i class="fin f7"></i><i class="fin f8"></i>
+            <i class="fin f9"></i><i class="fin f10"></i><i class="fin f11"></i><i class="fin f12"></i>
+          </div>
+          <div class="art-sphere s-main"></div>
+          <div class="art-sphere s-cut"></div>
+          <div class="art-curve c1"></div>
+          <div class="art-curve c2"></div>
+          <div class="art-vignette"></div>
+          <div class="art-glow"></div>
+        </div>
+      </div>
+      <div class="landing-noise" aria-hidden="true"></div>
+
+      <header class="landing-header glass-nav">
+        <a class="landing-brand" href="#landing"><span class="landing-mark"><i></i></span>Shomer</a>
+        <nav class="landing-nav" aria-label="Landing navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#what-shomer-checks">Checks</a>
+          <a href="#for-agents">Agents</a>
+          <button id="landingVerify" type="button">Open app <b>→</b></button>
+        </nav>
+      </header>
+
+      <!-- 1. Hero theater: hub + check rays -->
+      <div class="landing-hero hub-hero">
+        <div class="hero-copy">
+          <p class="landing-pill"><i></i> X Layer Ship Gate · OKX.AI ASP #6117 · A2MCP</p>
+          <h1>Is this the deployment<br /><em>you approved?</em></h1>
+          <p class="landing-lead">
+            Agents call Shomer <strong>before they ship or trust</strong> a deployment.
+            Live X Layer state vs the policy you approved—owner, Safe, upgrade, timelock, implementation—
+            returns <strong>Blocked</strong>, <strong>Review Required</strong>, or <strong>Policy Matched</strong>.
+            Never “safe.” Never “audited.”
+            <strong>Free</strong> verify for agents; <strong>Paid Deep Verification</strong> for privilege maps, artifact match, and auditor briefs.
+          </p>
+          <div class="landing-ctas">
+            <button class="landing-primary" id="landingStartCheck" type="button">Verify a contract <b>→</b></button>
+            <a class="landing-ghost" href="#for-agents">Agent API <span>↓</span></a>
+          </div>
+        </div>
+
+        <div class="hub-stage" aria-hidden="true">
+          <div class="hub-beam"></div>
+          <div class="hub-cards" id="hubCards">
+            <article class="hub-card dim c1" data-label="Owner">
+              <span class="hub-tag">Owner</span><strong>Safe 3/5</strong><small>matches policy</small>
+            </article>
+            <article class="hub-card dim c2" data-label="Upgrade">
+              <span class="hub-tag">Upgrade</span><strong>Proxy admin</strong><small>EIP-1967</small>
+            </article>
+            <article class="hub-card focus c3" data-label="Timelock">
+              <span class="hub-tag">Timelock</span><strong>≥ 48h delay</strong><small>matched</small>
+            </article>
+            <article class="hub-card dim c4" data-label="Impl">
+              <span class="hub-tag">Impl</span><strong>Code hash</strong><small>bytecode OK</small>
+            </article>
+            <article class="hub-card dim c5" data-label="Sanity">
+              <span class="hub-tag">Sanity</span><strong>Addresses</strong><small>no zero / dead</small>
+            </article>
+            <article class="hub-card dim c6" data-label="Deployer">
+              <span class="hub-tag">Deployer</span><strong>Creation</strong><small>OKLink / policy</small>
+            </article>
+          </div>
+          <div class="hub-core">
+            <span class="hub-mark"><i></i></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. How it works -->
+      <div id="how-it-works" class="landing-section air-section">
+        <p class="section-kicker">Ship Gate · founder loop</p>
+        <h2 class="section-head">How it works</h2>
+        <div class="feature-row">
+          <article class="feature-card">
+            <span class="feature-num">01</span>
+            <h3>See what’s on chain</h3>
+            <p>Paste a real X Layer address. We read who owns it, whether it can upgrade, and related facts—no mock data.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-num">02</span>
+            <h3>Write &amp; lock your rules</h3>
+            <p>Copy from chain or type by hand. Copying is never “approved.” You lock a version, then we can check.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-num">03</span>
+            <h3>Check the live chain</h3>
+            <p>We compare only to the version you locked—not a moving draft. Export a brief for a human reviewer.</p>
+          </article>
+        </div>
+      </div>
+
+
+      <!-- 2b. For agents (A2MCP) -->
+      <div id="for-agents" class="landing-section air-section agent-section">
+        <div class="agent-layout">
+          <div class="agent-copy">
+            <p class="section-kicker">For agents · Ship Gate · A2MCP</p>
+            <h2 class="section-head tight">Call Shomer before you ship</h2>
+            <p class="proof-lead">
+              Listed on <strong>OKX.AI</strong> as ASP <strong>#6117</strong>.
+              Other agents use Shomer as a <strong>ship gate</strong> on X Layer.
+            </p>
+            <ul class="proof-list">
+              <li><strong>Free</strong> — packs · read · draft · verify · ship-gate (verdict + evidence)</li>
+              <li><strong>Paid</strong> — Deep Verification: privilege map · reviewed artifact · auditor brief · x402 $0.01 on eip155:196</li>
+              <li><strong>Catalog</strong> — <code>GET /api/agent</code></li>
+              <li>Verdicts: Blocked · Review Required · Policy Matched — never invents a pass</li>
+            </ul>
+            <p class="agent-base">
+              Base
+              <a
+                href="https://shomer-agent-api.mixed-mouse.workers.dev/api/agent"
+                target="_blank"
+                rel="noopener noreferrer"
+                >shomer-agent-api.mixed-mouse.workers.dev</a
+              >
+            </p>
+          </div>
+          <div class="agent-terminal" aria-label="Example free verify curl">
+            <div class="agent-term-head">
+              <span>Free verify · curl</span>
+              <button type="button" class="agent-copy-btn" id="copyAgentCurl">Copy</button>
+            </div>
+            <pre id="agentCurlSample" class="agent-pre">curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network": "mainnet",
+    "contractAddress": "0xcA11bde05977b3631167028862bE2a173976CA11",
+    "policy": { "upgradeable": false },
+    "projectName": "agent-demo"
+  }'</pre>
+            <p class="agent-term-foot">Real RPC. Deterministic checks. Never invents a pass.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. UI-as-proof: verdict -->
+      <div id="what-shomer-checks" class="landing-section air-section proof-section">
+        <div class="proof-layout">
+          <div class="proof-copy">
+            <p class="section-kicker">What Shomer checks</p>
+            <h2 class="section-head tight">Deterministic evidence,<br />not a vibe check</h2>
+            <p class="proof-lead">Each check compares a declared field to a precise onchain fact—or is marked <em>out of scope</em> or <em>evidence missing</em>.</p>
+            <ul class="proof-list">
+              <li>Owner / Safe threshold</li>
+              <li>Upgrade authority (EIP-1967)</li>
+              <li>Timelock min delay</li>
+              <li>Implementation / code hash</li>
+              <li>Address &amp; chain sanity</li>
+              <li>Source verification recorded</li>
+            </ul>
+            <a class="landing-ghost" href="#verify-form">Start with an address <span>↓</span></a>
+          </div>
+          <div class="proof-ui verdict-mock" aria-hidden="true">
+            <div class="vm-head">
+              <span class="vm-orb"></span>
+              <div>
+                <small>APPROVED v1 · X LAYER MAINNET</small>
+                <strong>Review Required</strong>
+              </div>
+              <b>67%<span>coverage</span></b>
+            </div>
+            <div class="vm-stats">
+              <div><em>0</em><span>Blocked</span></div>
+              <div><em class="amber">2</em><span>Review</span></div>
+              <div><em class="green">4</em><span>Matched</span></div>
+              <div><em>3</em><span>Out of scope</span></div>
+            </div>
+            <div class="vm-rows">
+              <div class="vm-row ok"><b>MATCHED</b><span>Owner matches Safe</span><code>0x4DFF…0bf8</code></div>
+              <div class="vm-row ok"><b>MATCHED</b><span>Upgrade authority</span><code>EIP-1967 admin</code></div>
+              <div class="vm-row rev"><b>REVIEW</b><span>Source verification</span><code>Sourcify unverified</code></div>
+              <div class="vm-row skip"><b>OUT OF SCOPE</b><span>Fee recipient</span><code>not declared</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. UI-as-proof: Auditor Brief -->
+      <div id="auditor-brief" class="landing-section air-section proof-section">
+        <div class="proof-layout reverse">
+          <div class="proof-copy">
+            <p class="section-kicker">Auditor handoff</p>
+            <h2 class="section-head tight">Auditor Brief</h2>
+            <p class="proof-lead">A printable evidence package: verdict, every check, observed values, RPC sources, remediations. Not an audit certificate.</p>
+            <button class="landing-primary" id="previewBrief" type="button">Open Brief in app <b>→</b></button>
+          </div>
+          <div class="proof-ui brief-mock" aria-hidden="true">
+            <div class="bm-brand"><span class="landing-mark tiny"><i></i></span> SHOMER <small>AUDITOR BRIEF</small></div>
+            <p class="bm-meta">Manifest v1 · Block #65,360,103 · chain 196</p>
+            <div class="bm-verdict">
+              <span class="vm-orb review"></span>
+              <div><small>LAUNCH VERDICT</small><strong>Review Required</strong></div>
+            </div>
+            <div class="bm-line"><b>BLOCKERS</b><span>None</span></div>
+            <div class="bm-line"><b>REVIEW</b><span>Source verification · initializer seal</span></div>
+            <div class="bm-line"><b>MATCHED</b><span>Owner · upgrade · impl · sanity</span></div>
+            <p class="bm-foot">Not a claim that the contract is safe or audited.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Verify form -->
+      <div id="verify-form" class="landing-section air-section verify-section">
+        <p class="section-kicker">Start here</p>
+        <h2 class="section-head tight">Verify a live deployment</h2>
+        <p class="proof-lead center">Contract-address first. Policy draft and approve live inside the app.</p>
+        <form class="landing-verify-form" id="landingVerifyForm">
+          <label>
+            <span>Network</span>
+            <select id="landingNetwork" name="network">
+              <option value="mainnet">X Layer Mainnet</option>
+              <option value="testnet">X Layer Testnet</option>
+            </select>
+          </label>
+          <label class="grow">
+            <span>Contract address</span>
+            <input id="landingContract" name="contract" placeholder="0x…" spellcheck="false" autocomplete="off" />
+          </label>
+          <button class="landing-primary" type="submit" id="landingGetStarted">Continue <b>→</b></button>
+        </form>
+        <p class="sample-hint">
+          <button type="button" class="text-link" id="landingTrySample">Try sample · Multicall3 on mainnet</button>
+        </p>
+      </div>
+
+      <!-- 6. Close -->
+      <div class="landing-close">
+        <div class="landing-close-glow" aria-hidden="true"></div>
+        <span class="hub-mark large"><i></i></span>
+        <h2>Ship what you approved.</h2>
+        <p>A deployment verdict is not an audit or a promise of safety.</p>
+        <p class="landing-close-meta">
+          X Layer Ship Gate · ASP #6117 ·
+          <a href="#for-agents">Free A2MCP for agents</a>
+        </p>
+        <div class="landing-ctas landing-close-ctas">
+          <a class="landing-ghost" href="#verify-form">Paste an address <span>↑</span></a>
+          <button class="landing-primary" id="landingOpenAppClose" type="button">Open app <b>→</b></button>
+        </div>
+      </div>
+
+      <div class="landing-disclaimer">
+        <p>Shomer verifies that the real deployment matches the policy you declared. It does not audit code, find vulnerabilities, or assert that a contract is safe. AccessControl checks are a limited probe only.</p>
+      </div>
+    </section>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="app-shell" id="appShell">
+      <aside class="sidebar">
+        <a class="brand" href="#top" aria-label="Shomer home">
+          <span class="brand-mark"><span></span></span>
+          <span>shomer</span>
+        </a>
+        <nav>
+          <button class="nav-item active" data-panel="overview" type="button">
+            <span class="nav-icon">1</span>Live
+          </button>
+          <button class="nav-item" data-panel="manifest" type="button">
+            <span class="nav-icon">2</span>Your rules
+          </button>
+          <button class="nav-item" data-panel="scans" type="button">
+            <span class="nav-icon">3</span>Results
+          </button>
+          <button class="nav-item" data-panel="reports" type="button">
+            <span class="nav-icon">4</span>Brief
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <button class="network-pill" id="networkSwitch" type="button">
+            <i></i><span id="networkLabel">X Layer Mainnet</span> <span>⌄</span>
+          </button>
+        </div>
+      </aside>
+
+      <main id="top">
+        <header class="topbar">
+          <div class="crumb">
+            <strong id="projectCrumb">New verification</strong>
+          </div>
+          <div class="top-actions">
+            <button class="button ghost small" id="newScanBtn" type="button">Reset</button>
+          </div>
+        </header>
+
+        <!-- OVERVIEW = Verify step -->
+        <section class="panel is-visible" id="overview">
+          <div class="app-page-head">
+            <div>
+              <p class="eyebrow app-eyebrow"><span></span> LIVE STATE</p>
+              <h1>Live</h1>
+              <p class="app-page-sub" id="loopBanner">
+                1) See what’s on chain · 2) Write the rules you approved · 3) Lock them · 4) Compare again
+              </p>
+              <div class="loop-chips" id="loopChips" aria-label="Founder loop progress">
+                <span data-step="live">1 On chain</span>
+                <span data-step="draft">2 Your rules</span>
+                <span data-step="approve">3 Lock in</span>
+                <span data-step="verify">4 Check</span>
+              </div>
+            </div>
+            <div class="hero-actions app-primary-actions">
+              <button class="button ghost" id="viewManifest" type="button">Write your rules</button>
+              <button class="button ghost" id="fillFromLive" type="button" hidden>
+                Copy from chain into rules
+              </button>
+              <button class="button dark" id="verifyApproved" type="button" hidden>
+                Check against locked rules <span id="verifyApprovedLabel">v?</span>
+              </button>
+            </div>
+          </div>
+
+          <section class="verify-card card" id="verifyFormCard">
+            <form id="verifyForm" class="verify-form simple-wizard">
+              <div class="wizard-row">
+                <label class="field compact">
+                  <span>Network</span>
+                  <select name="network" id="fieldNetwork">
+                    <option value="mainnet">X Layer Mainnet</option>
+                    <option value="testnet">X Layer Testnet</option>
+                  </select>
+                </label>
+                <label class="field wide">
+                  <span>Contract address</span>
+                  <input
+                    name="contractAddress"
+                    id="fieldContract"
+                    placeholder="0x…"
+                    spellcheck="false"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+              <label class="field" style="margin-top:12px">
+                <span>Project name (optional)</span>
+                <input
+                  name="projectName"
+                  id="fieldProjectName"
+                  placeholder="Optional label"
+                  autocomplete="off"
+                />
+              </label>
+              <div class="form-actions">
+                <button class="button primary" type="submit" id="runCheckForm">
+                  Read live state <span>→</span>
+                </button>
+                <button class="button ghost" type="button" id="trySampleInForm">
+                  Sample contract
+                </button>
+              </div>
+            </form>
+          </section>
+          <!-- keep id for scripts that may reference runCheck -->
+          <button id="runCheck" type="button" hidden aria-hidden="true"></button>
+
+          <section class="verdict-card" id="verdictCard" hidden>
+            <div class="verdict-head">
+              <div class="verdict-title">
+                <div class="status-orb review" id="verdictOrb"></div>
+                <div>
+                  <p class="eyebrow amber" id="verdictMeta">NO SCAN YET</p>
+                  <h2 id="verdictTitle">—</h2>
+                  <p id="verdictSub">No verification yet.</p>
+                </div>
+              </div>
+              <button class="button dark" id="openBrief" type="button">
+                Auditor Brief <span>→</span>
+              </button>
+            </div>
+            <div class="verdict-summary" id="verdictSummary"></div>
+            <div class="scan-meta" id="scanMeta"></div>
+          </section>
+
+          <section class="content-grid" id="overviewFindings" hidden>
+            <div class="findings card">
+              <div class="card-heading">
+                <div>
+                  <h3>Attention</h3>
+                </div>
+                <button class="text-btn" data-panel-target="scans" type="button">
+                  All results <span>→</span>
+                </button>
+              </div>
+              <div id="findingsList"></div>
+            </div>
+            <div class="right-stack">
+              <div class="card project-card">
+                <div class="card-heading">
+                  <div>
+                    <h3 id="projectNameDisplay">—</h3>
+                  </div>
+                  <span class="project-live" id="projectNetworkBadge"><i></i> —</span>
+                </div>
+                <p class="contract-line">
+                  <span>Contract</span>
+                  <code id="projectContract">—</code>
+                  <button class="copy" id="copyContract" type="button" title="Copy">⧉</button>
+                </p>
+                <div class="project-stats">
+                  <div>
+                    <span>Block</span>
+                    <strong id="projectBlock">—</strong>
+                  </div>
+                  <div>
+                    <span>Code</span>
+                    <strong id="projectCode">—</strong>
+                  </div>
+                </div>
+                <button class="full-link" data-panel-target="manifest" type="button">
+                  Edit your rules <span>→</span>
+                </button>
+              </div>
+              <div class="card privilege-card">
+                <div class="card-heading">
+                  <div>
+                    <h3>Onchain keys</h3>
+                  </div>
+                </div>
+                <div class="privilege-list" id="privilegeMap"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="empty-state card" id="emptyState">
+            <h3 id="emptyTitle">Start with a contract</h3>
+            <p id="emptyBody">
+              First we look at the real contract. Then you write the rules you approved.
+              We only say “match” when the chain still fits those rules. Not an audit.
+            </p>
+            <ol class="empty-list" id="emptySteps">
+              <li><strong>On chain</strong> — see what’s deployed now</li>
+              <li><strong>Your rules</strong> — write what you meant to approve</li>
+              <li><strong>Lock in</strong> — freeze that list so it can’t drift</li>
+              <li><strong>Check</strong> — does the chain still match?</li>
+            </ol>
+            <div class="empty-actions">
+              <button class="button primary" type="button" id="trySampleContract">
+                Try sample · Multicall3 <span>→</span>
+              </button>
+              <p class="empty-sample-note">Mainnet · 0xcA11…CA11 · great for a first live read</p>
+            </div>
+          </section>
+
+          <footer class="disclaimer">
+            <p>
+              Evidence only — not an audit, not a safety claim.
+            </p>
+          </footer>
+        </section>
+
+        <!-- MANIFEST = Policy -->
+        <section class="panel" id="manifest">
+          <div class="app-page-head">
+            <div>
+              <p class="eyebrow app-eyebrow"><span></span> WHAT YOU APPROVED</p>
+              <h1>Your rules</h1>
+              <p class="app-page-sub">
+                This is the checklist you stand behind—not what the chain happens to show right now.
+                Fill it in, then <strong>lock it in</strong>. Only after that can we check if the live contract still matches.
+              </p>
+            </div>
+            <div class="hero-actions app-primary-actions">
+              <button class="button ghost" id="fillFromLive2" type="button" hidden>
+                Copy from chain
+              </button>
+              <button class="button ghost" id="saveManifest" type="button">
+                Save work-in-progress
+              </button>
+              <button class="button primary" id="approveManifest" type="button">
+                Lock in <span id="approveVersionLabel">v1</span>
+              </button>
+              <button class="button dark" id="verifyFromManifest" type="button" hidden>
+                Check against <span id="verifyFromManifestLabel">v?</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card plain-english-card" id="policyPlainEnglish">
+            <p class="section-kicker" style="margin:0 0 10px;color:var(--green)">In plain English</p>
+            <ol class="plain-english-steps">
+              <li><strong>On chain</strong> only shows what’s deployed today. It is not your approval.</li>
+              <li><strong>Your rules</strong> are the promises you made (who owns it, can it upgrade, etc.).</li>
+              <li><strong>Copy from chain</strong> is a shortcut to fill blanks—you still review and lock them.</li>
+              <li><strong>Lock in</strong> freezes a version. <strong>Check</strong> compares the live chain to that freeze.</li>
+              <li>Empty boxes mean “we’re not checking that.” We never treat empty as a pass.</li>
+            </ol>
+          </div>
+
+          <div class="manifest-status card" id="manifestStatus"></div>
+          <div class="card policy-pack-card" id="policyPackCard">
+            <div class="card-heading">
+              <div>
+                <h3>Start from a template</h3>
+                <p class="app-page-sub" style="margin:6px 0 0;font-size:12px">
+                  Pick a common setup. This only fills a <strong>work-in-progress</strong> list—it does <strong>not</strong> lock anything yet.
+                </p>
+              </div>
+            </div>
+            <div class="policy-pack-row">
+              <label class="field">
+                <span>Template</span>
+                <select id="policyPackSelect">
+                  <option value="">Choose a template…</option>
+                  <option value="simple_ownable">Simple ownership (one owner, not upgradeable)</option>
+                  <option value="safe_governed">Shared Safe / multisig control</option>
+                  <option value="uups_proxy">Upgradeable proxy (UUPS-style)</option>
+                  <option value="transparent_proxy">Upgradeable proxy (admin-style)</option>
+                  <option value="erc20_launch">Token launch checklist</option>
+                </select>
+              </label>
+              <button class="button ghost" type="button" id="applyPolicyPack">Use this template</button>
+              <button class="button ghost" type="button" id="applyPackFromLive" hidden>Template + fill from chain</button>
+            </div>
+            <p class="policy-pack-desc" id="policyPackDesc"></p>
+          </div>
+          <div class="card policy-diff-card" id="policyDiffCard" hidden>
+            <div class="card-heading">
+              <div>
+                <h3>What changed since last lock-in</h3>
+                <p class="app-page-sub" style="margin:6px 0 0;font-size:12px" id="policyDiffSubtitle">
+                  Read this before you lock in a new version.
+                </p>
+              </div>
+            </div>
+            <div id="policyDiffList" class="policy-diff-list"></div>
+          </div>
+          <div class="manifest-note">
+            <span>◆</span>
+            <p>
+              <strong>From chain</strong> = we copied what we saw live (still only a draft—not a match).
+              <strong>You set this</strong> = you typed or changed it.
+              <strong>Left blank</strong> = we skip that check (we do not treat blanks as “OK”).
+            </p>
+          </div>
+          <div class="map-legend manifest-legend">
+            <span><i class="dot safe-dot"></i> From chain</span>
+            <span><i class="dot wallet-dot"></i> You set this</span>
+          </div>
+          <form id="manifestForm" class="manifest-form">
+            <article class="manifest-section">
+              <p class="eyebrow">WHO CONTROLS THIS</p>
+              <div class="fields">
+                <label>Who was allowed to deploy it<input name="expectedDeployer" placeholder="0x… wallet that should have created the contract" spellcheck="false" /></label>
+                <label>Who should own it now<input name="owner" placeholder="0x… main owner address" spellcheck="false" /></label>
+                <label>If a Safe / shared wallet owns it—that address<input name="expectedSafe" placeholder="0x… multisig address" spellcheck="false" /></label>
+                <label>Minimum signatures required (e.g. 3 of 5)<input name="minMultisigThreshold" type="number" min="1" placeholder="e.g. 3" /></label>
+                <label class="check">
+                  <input name="timelockRequired" type="checkbox" />
+                  Changes must wait (timelock required)
+                </label>
+                <label>How long to wait, in seconds (e.g. 172800 = 48 hours)<input name="minTimelockDelaySec" type="number" min="0" placeholder="e.g. 172800" /></label>
+              </div>
+            </article>
+            <article class="manifest-section">
+              <p class="eyebrow">CAN THE CODE CHANGE LATER?</p>
+              <div class="fields">
+                <label class="check">
+                  <input name="upgradeable" type="checkbox" />
+                  Yes — this contract can be upgraded
+                </label>
+                <label>Who is allowed to upgrade / admin the proxy<input name="expectedProxyAdminOrUpgradeAuthority" placeholder="0x… upgrade admin" spellcheck="false" /></label>
+                <label>Implementation address we approved<input name="expectedImplementation" placeholder="0x… logic contract" spellcheck="false" /></label>
+                <label>Code fingerprint we approved (hash)<input name="expectedImplementationCodeHash" placeholder="0x… bytecode hash from build" spellcheck="false" /></label>
+              </div>
+            </article>
+            <details class="manifest-more" id="manifestMoreFields">
+              <summary>
+                <span class="manifest-more-title">Optional extras</span>
+                <span class="manifest-more-meta">Money flows · oracles · routers — only if you care</span>
+              </summary>
+              <div class="manifest-more-body">
+                <article class="manifest-section">
+                  <p class="eyebrow">MONEY &amp; TOKENS (OPTIONAL)</p>
+                  <div class="fields">
+                    <label>Treasury wallet<input name="treasury" placeholder="0x… where funds should sit" spellcheck="false" /></label>
+                    <label>Who receives fees<input name="feeRecipient" placeholder="0x…" spellcheck="false" /></label>
+                    <label>Max tokens allowed (raw units)<input name="maxTokenSupply" placeholder="optional number" /></label>
+                    <label class="check">
+                      <input name="mintingAllowedAfterLaunch" type="checkbox" />
+                      New tokens may still be minted after launch
+                    </label>
+                  </div>
+                </article>
+                <article class="manifest-section">
+                  <p class="eyebrow">CONNECTIONS (OPTIONAL)</p>
+                  <div class="fields">
+                    <label>Price feed (oracle) address<input name="oracle" placeholder="0x…" spellcheck="false" /></label>
+                    <label>Pair label (for your notes)<input name="oraclePair" placeholder="TOKEN/USDT" /></label>
+                    <label>Price feed max age (seconds)<input name="maxOracleStalenessSec" type="number" min="0" /></label>
+                    <label>Allowed routers (comma-separated)<input name="approvedRouters" placeholder="0x…, 0x…" spellcheck="false" /></label>
+                    <label>Allowed factories<input name="approvedFactories" placeholder="0x…" spellcheck="false" /></label>
+                    <label>Allowed pools<input name="approvedPools" placeholder="0x…" spellcheck="false" /></label>
+                    <label>Max fee (basis points, e.g. 30 = 0.3%)<input name="maxFeeBps" type="number" min="0" /></label>
+                    <label>Max slippage (basis points)<input name="maxSlippageBps" type="number" min="0" /></label>
+                  </div>
+                </article>
+              </div>
+            </details>
+          </form>
+        </section>
+
+        <!-- RESULTS -->
+        <section class="panel" id="scans">
+          <div class="app-page-head">
+            <div>
+              <p class="eyebrow app-eyebrow"><span></span> THE COMPARISON</p>
+              <h1>Results</h1>
+              <p class="app-page-sub">
+                Live chain vs your locked rules.
+                <strong>Skipped / not in scope</strong> = you left that rule blank.
+                <strong>Missing evidence</strong> = you set a rule but we couldn’t read it on chain.
+              </p>
+            </div>
+            <button class="button primary" id="runCheck2" type="button">
+              Verify vs <span id="runCheck2Label">v?</span>
+            </button>
+          </div>
+          <div class="checks-toolbar">
+            <div class="tabs">
+              <button class="tab active" data-filter="all" type="button">All <span id="countAll">0</span></button>
+              <button class="tab" data-filter="blocked" type="button">Blocked <span id="countBlocked">0</span></button>
+              <button class="tab" data-filter="review" type="button">Review <span id="countReview">0</span></button>
+              <button class="tab" data-filter="matched" type="button">Matched <span id="countMatched">0</span></button>
+              <button class="tab" data-filter="out_of_scope" type="button">Out of scope <span id="countOutOfScope">0</span></button>
+              <button class="tab" data-filter="evidence_missing" type="button">Missing <span id="countEvidenceMissing">0</span></button>
+            </div>
+            <span class="check-date" id="checkDate">No verification yet</span>
+          </div>
+          <div class="check-list" id="checkList">
+            <p class="muted-center">Lock in your rules first, then run Check to see the comparison.</p>
+          </div>
+        </section>
+
+        <!-- BRIEF -->
+        <section class="panel" id="reports">
+          <div class="app-page-head">
+            <div>
+              <p class="eyebrow app-eyebrow"><span></span> SHAREABLE SUMMARY</p>
+              <h1>Brief</h1>
+              <p class="app-page-sub">A printable report of what we checked. It is evidence—not a security audit.</p>
+            </div>
+            <button class="button primary" id="openBrief2" type="button">
+              Open brief <span>→</span>
+            </button>
+          </div>
+          <div class="report-table card" id="reportTable">
+            <div class="report-row report-header">
+              <span>REPORT</span><span>VERDICT</span><span>CREATED</span><span></span>
+            </div>
+            <div class="report-row" id="reportEmpty">
+              <div>
+                <strong>No brief yet</strong>
+                <small>Run Verify vs approved to generate one.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <dialog class="modal evidence-modal" id="evidenceModal">
+      <button class="modal-close" data-close type="button">×</button>
+      <div id="evidenceContent"></div>
+    </dialog>
+    <dialog class="modal brief-modal" id="briefModal">
+      <button class="modal-close" data-close type="button">×</button>
+      <div class="brief-paper" id="briefPaper"></div>
+      <div class="brief-actions">
+        <button class="button ghost" data-close type="button">Close</button>
+        <button class="button primary" id="printBrief" type="button">
+          Save as PDF <span>↓</span>
+        </button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+    <div class="scan-overlay" id="scanOverlay" hidden>
+      <div class="scan-box">
+        <p class="eyebrow"><span></span> LIVE X LAYER READ</p>
+        <h3 id="scanStep">Connecting to RPC…</h3>
+        <p id="scanDetail">No results are simulated.</p>
+        <div class="scan-bar"><i id="scanBar"></i></div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
