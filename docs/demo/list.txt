@@ -1,5 +1,0 @@
-file 'shot3.mp4'
-file 'shot4.mp4'
-file 'shot1.mp4'
-file 'shot5.mp4'
-file 'shot2.mp4'
