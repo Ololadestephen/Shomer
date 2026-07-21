@@ -10,19 +10,17 @@
  */
 import { readFacts } from '../src/lib/adapters/xlayer';
 import { policyHash } from '../src/lib/policy/policyHash';
-import { seedDraftFromPack } from '../src/lib/policy/packs';
+import { getPolicyPack, seedDraftFromPack } from '../src/lib/policy/packs';
 import {
   emptyManifest,
+  type ManifestFieldKey,
   type ManifestFields,
   type ObservedFacts,
 } from '../src/lib/policy/types';
 import { normalizeAddress } from '../src/lib/utils/address';
 import { runAgentVerify, type AgentVerifyRequest } from './agentVerify';
 import { runAgentCreateDraft } from './agentTools';
-
-function parseNetwork(n: unknown): 'mainnet' | 'testnet' {
-  return n === 'testnet' ? 'testnet' : 'mainnet';
-}
+import { parseAgentNetwork } from './agentInput';
 
 /** Hard fields that count as an explicitly supplied policy (not empty pack defaults alone). */
 const SUBSTANTIVE_KEYS: (keyof ManifestFields)[] = [
@@ -56,7 +54,7 @@ function isEmptyValue(v: unknown): boolean {
 
 /**
  * Caller supplied an explicit policy they treat as approved (not live-imported draft).
- * Requires either approvedPolicy: true with substantive fields, or substantive policy fields.
+ * Requires approvedPolicy: true with substantive fields.
  */
 export function hasExplicitApprovedPolicy(
   policy: Partial<ManifestFields> | undefined,
@@ -66,9 +64,7 @@ export function hasExplicitApprovedPolicy(
   const hasSubstantive = SUBSTANTIVE_KEYS.some((k) => !isEmptyValue(policy[k]));
   // upgradeable alone is not enough (pack defaults set it)
   if (!hasSubstantive) return false;
-  // Prefer explicit flag; if omitted, substantive policy still counts as explicit
-  if (approvedPolicyFlag === false) return false;
-  return true;
+  return approvedPolicyFlag === true;
 }
 
 /**
@@ -81,7 +77,15 @@ function buildVerificationPolicy(input: {
   contractAddress: string;
   projectName?: string;
   policy?: Partial<ManifestFields>;
-}): ManifestFields {
+}): { manifest: ManifestFields; declaredFields: ManifestFieldKey[] } {
+  const declaredFields = new Set<ManifestFieldKey>();
+  const pack = getPolicyPack(input.packId);
+  for (const [key, value] of Object.entries(pack?.defaults ?? {})) {
+    if (value !== undefined) declaredFields.add(key as ManifestFieldKey);
+  }
+  for (const [key, value] of Object.entries(input.policy ?? {})) {
+    if (value !== undefined) declaredFields.add(key as ManifestFieldKey);
+  }
   if (input.packId) {
     const seeded = seedDraftFromPack({
       packId: input.packId,
@@ -90,14 +94,22 @@ function buildVerificationPolicy(input: {
       projectName: input.projectName ?? '',
       overrides: input.policy,
     });
-    if (seeded.ok) return seeded.draft;
+    if (seeded.ok) return { manifest: seeded.draft, declaredFields: [...declaredFields] };
   }
-  return emptyManifest({
-    ...(input.policy ?? {}),
-    network: input.network,
-    contractAddress: input.contractAddress,
-    projectName: input.projectName?.trim() || input.policy?.projectName || 'Ship gate',
-  });
+  return {
+    manifest: emptyManifest({
+      ...(input.policy ?? {}),
+      network: input.network,
+      contractAddress: input.contractAddress,
+      projectName: input.projectName?.trim() || input.policy?.projectName || 'Ship gate',
+    }),
+    declaredFields: [...declaredFields],
+  };
+}
+
+export interface RunAgentShipGateOptions {
+  /** Test/integration seam. Production uses the real X Layer adapter. */
+  readFacts?: typeof readFacts;
 }
 
 export async function runAgentShipGate(input: {
@@ -120,8 +132,20 @@ export async function runAgentShipGate(input: {
   options?: AgentVerifyRequest['options'];
   /** @deprecated Ignored. Live-filled drafts are never used for verification. */
   usePackAsPolicy?: boolean;
-}): Promise<{ status: number; body: Record<string, unknown> }> {
-  const network = parseNetwork(input.network);
+}, runOpts?: RunAgentShipGateOptions): Promise<{ status: number; body: Record<string, unknown> }> {
+  let network: 'mainnet' | 'testnet';
+  try {
+    network = parseAgentNetwork(input.network);
+  } catch (error) {
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        error: 'invalid_network',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
   const addr = normalizeAddress(input.contractAddress ?? '');
   if (!addr) {
     return {
@@ -152,7 +176,7 @@ export async function runAgentShipGate(input: {
       }
       requestedBlock = n;
     }
-    facts = await readFacts({
+    facts = await (runOpts?.readFacts ?? readFacts)({
       network,
       contractAddress: addr,
       blockNumber: requestedBlock,
@@ -192,7 +216,7 @@ export async function runAgentShipGate(input: {
   }
 
   // Verification policy: pack defaults + explicit policy ONLY (never live-copied alone)
-  const policyForVerify = buildVerificationPolicy({
+  const verificationPolicy = buildVerificationPolicy({
     packId: input.packId,
     network,
     contractAddress: addr,
@@ -209,18 +233,21 @@ export async function runAgentShipGate(input: {
     {
       network,
       contractAddress: addr,
-      policy: policyForVerify,
+      policy: verificationPolicy.manifest,
       projectName: input.projectName,
       blockNumber: facts.blockNumber, // pin verify to the same snapshot block
       options: input.options,
     },
     'free',
-    { facts }, // same ObservedFacts — no second full read
+    {
+      facts,
+      declaredPolicyFields: verificationPolicy.declaredFields,
+    }, // same ObservedFacts — no second full read
   );
 
   const body = { ...verified.body } as Record<string, unknown>;
   const verdict = body.verdict as string | undefined;
-  const usedPolicyHash = policyHash(policyForVerify);
+  const usedPolicyHash = policyHash(verificationPolicy.manifest);
 
   const matched = body.ok === true && verdict === 'policy_matched';
   const allowed = matched && explicitApproved;
@@ -251,7 +278,7 @@ export async function runAgentShipGate(input: {
       draft,
       draftStatus,
       /** Policy actually used for the verdict (never live-only import). */
-      verificationPolicy: policyForVerify,
+      verificationPolicy: verificationPolicy.manifest,
       policyHash: usedPolicyHash,
       observedBlock: facts.blockNumber,
       chainReads: 1,

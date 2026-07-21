@@ -13,8 +13,13 @@ export default defineConfig(({ mode }) => {
     'X402_PRICE_USD',
     'X402_NETWORK',
     'X402_ASSET',
+    'X402_ASSET_NAME',
+    'X402_ASSET_VERSION',
     'X402_FACILITATOR_URL',
     'X402_DEV_BYPASS',
+    'OKX_API_KEY',
+    'OKX_SECRET_KEY',
+    'OKX_PASSPHRASE',
   ] as const;
   for (const k of keys) {
     if (env[k] && !process.env[k]) process.env[k] = env[k];

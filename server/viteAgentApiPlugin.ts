@@ -27,6 +27,10 @@ import {
   loadX402Config,
   verifyPayment,
 } from './x402';
+import {
+  HttpRequestError,
+  MAX_REQUEST_BODY_BYTES,
+} from './httpSafety';
 
 function sendJson(
   res: ServerResponse,
@@ -49,8 +53,29 @@ function sendJson(
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c: Buffer) => chunks.push(c));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    let size = 0;
+    let tooLarge = false;
+    req.on('data', (c: Buffer) => {
+      size += c.byteLength;
+      if (size > MAX_REQUEST_BODY_BYTES) {
+        tooLarge = true;
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on('end', () => {
+      if (tooLarge) {
+        reject(
+          new HttpRequestError(
+            413,
+            'payload_too_large',
+            `JSON body exceeds ${MAX_REQUEST_BODY_BYTES} bytes.`,
+          ),
+        );
+        return;
+      }
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
     req.on('error', reject);
   });
 }
@@ -147,7 +172,7 @@ function mountAgentApi(middlewares: Connect.Server) {
               {
                 ok: false,
                 error: 'payment_required',
-                x402Version: 1,
+                x402Version: 2,
                 accepts: requirements.accepts,
                 message:
                   'Payment required (x402). Retry with PAYMENT-SIGNATURE or X-PAYMENT header after paying.',
@@ -155,7 +180,6 @@ function mountAgentApi(middlewares: Connect.Server) {
               },
               {
                 'PAYMENT-REQUIRED': encoded,
-                'Payment-Required': encoded,
               },
             );
             return;
@@ -182,14 +206,21 @@ function mountAgentApi(middlewares: Connect.Server) {
           }
 
           const { status, body } = await runAgentVerify(input, 'paid');
-          sendJson(res, status, {
-            ...body,
-            payment: {
-              settled: paymentCheck.mode !== 'structural' || cfg.devBypass === true,
-              mode: paymentCheck.mode,
-              detail: paymentCheck.detail,
+          sendJson(
+            res,
+            status,
+            {
+              ...body,
+              payment: {
+                settled: true,
+                mode: paymentCheck.mode,
+                detail: paymentCheck.detail,
+              },
             },
-          });
+            paymentCheck.responseHeader
+              ? { 'PAYMENT-RESPONSE': paymentCheck.responseHeader }
+              : undefined,
+          );
           return;
         }
 
@@ -270,6 +301,14 @@ function mountAgentApi(middlewares: Connect.Server) {
 
         sendJson(res, 404, { ok: false, error: 'not_found', path });
       } catch (err) {
+        if (err instanceof HttpRequestError) {
+          sendJson(res, err.status, {
+            ok: false,
+            error: err.code,
+            message: err.message,
+          });
+          return;
+        }
         const msg = err instanceof Error ? err.message : String(err);
         sendJson(res, 500, { ok: false, error: 'server_error', message: msg });
       }

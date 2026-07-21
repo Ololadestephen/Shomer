@@ -44,7 +44,7 @@ Full detail: [docs/FREE-VS-PAID.md](./docs/FREE-VS-PAID.md)
 | --- | --- | --- |
 | **For** | Everyday agent automation | Evidence packages for humans / serious handoff |
 | **Endpoints** | `packs` · `read` · `draft` · `verify` · `ship-gate` | `verify/paid` only |
-| **Payment** | None | x402 · **USDC on X Layer** (`eip155:196`) · ~$0.01 |
+| **Payment** | None | **OKX Agent Payments Protocol** · **USDC on X Layer** (`eip155:196`) · ~$0.01 |
 | **You get** | Verdict, coverage, per-check evidence, facts, `policyHash` | Same core engine **plus** privilege map, reviewed artifact/code-hash compare, auditor brief (JSON + Markdown) |
 | **Not** | Auto-approval or “safe” claims | A second truth engine or LLM audit |
 
@@ -123,7 +123,7 @@ Inspect `verdict`, `shipGate.allowed` / `shipGate.recommendation`, `policyHash`,
 ### Paid Deep Verification
 
 ```bash
-# Expect HTTP 402 without payment; settle x402 on X Layer USDC, then retry
+# Expect HTTP 402 without payment; confirm via OKX Agent Payments Protocol, then retry
 curl -i -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid \
   -H 'Content-Type: application/json' \
   -d '{
@@ -178,7 +178,7 @@ Deterministic policy engine — no LLM guessing.
 | Policy engine | Pure TS (`src/lib/policy`) |
 | Always-on API | Cloudflare Worker (`workers/agent-api`) |
 | Public UI host | Cloudflare Pages (`shomer-ui`) |
-| Paid settlement | x402 USDC on **X Layer** (not Base) |
+| Paid settlement | **OKX Agent Payments Protocol** v2 · USDC on **X Layer** (not Base) |
 
 ---
 
@@ -197,6 +197,9 @@ npm run worker:deploy
 # secrets (server-only, never VITE_*):
 #   npx wrangler secret put OKLINK_API_KEY --config workers/agent-api/wrangler.toml
 #   npx wrangler secret put X402_PAY_TO --config workers/agent-api/wrangler.toml
+#   npx wrangler secret put OKX_API_KEY --config workers/agent-api/wrangler.toml
+#   npx wrangler secret put OKX_SECRET_KEY --config workers/agent-api/wrangler.toml
+#   npx wrangler secret put OKX_PASSPHRASE --config workers/agent-api/wrangler.toml
 
 # Public UI
 npm run pages:deploy
@@ -209,6 +212,12 @@ See [`.env.example`](./.env.example) and [docs/ASP.md](./docs/ASP.md).
 ```bash
 npm run test:engine    # pure policy fixtures
 npm run test:paid      # Deep Verification fixtures
+npm run test:ship-gate # offline approval/verdict/one-read invariants
+npm run test:x402      # offline payment challenge + fail-closed proof checks
+npm run test:api       # malformed/oversized/bounded-input failure modes
+npm run test:ci        # complete deterministic CI gate
+npm run test:live:xlayer # opt-in live X Layer matrix (not CI)
+npm run test:live:x402   # live free challenge; paid replay only with confirmed authorization
 npm run case:blocked   # mainnet wrong-owner → Blocked
 npm run smoke          # live RPC sample
 npm run smoke:agent    # agent verify smoke
@@ -225,6 +234,7 @@ npm run smoke:agent    # agent verify smoke
 | [ASP.md](./docs/ASP.md) | A2MCP / Workers / x402 |
 | [ASP-LISTING.md](./docs/ASP-LISTING.md) | Marketplace listing copy |
 | [DEMO-AND-X-POST.md](./docs/DEMO-AND-X-POST.md) | Demo script + #OKXAI post |
+| [TESTING.md](./docs/TESTING.md) | Deterministic, live-chain, and paid test gates |
 | [case-studies/blocked-owner-mismatch.md](./docs/case-studies/blocked-owner-mismatch.md) | Public Blocked example |
 
 ---

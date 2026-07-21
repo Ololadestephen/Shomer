@@ -1,6 +1,7 @@
 import type {
   CheckResult,
   Coverage,
+  ManifestFieldKey,
   ManifestFields,
   ObservedFacts,
   ScanRun,
@@ -27,10 +28,67 @@ export interface PolicyCheckOptions {
    * - `out_of_scope`: ignore (agent noise reduction). Never hides real mismatches.
    */
   undeclaredObserved?: UndeclaredObservedMode;
+  /**
+   * Raw policy fields declared by an API caller before defaults were applied.
+   * When present, default booleans from `emptyManifest()` must not become rules.
+   * The founder UI omits this option because it verifies a complete approved
+   * ManifestFields snapshot.
+   */
+  declaredFields?: readonly ManifestFieldKey[];
 }
 
 function undeclaredMode(opts?: PolicyCheckOptions): UndeclaredObservedMode {
   return opts?.undeclaredObserved === 'out_of_scope' ? 'out_of_scope' : 'review';
+}
+
+const IDENTITY_FIELDS = new Set<ManifestFieldKey>([
+  'projectName',
+  'network',
+  'contractAddress',
+]);
+
+const DEFAULT_DRIVEN_CHECK_FIELDS: Partial<
+  Record<string, readonly ManifestFieldKey[]>
+> = {
+  upgrade_authority: [
+    'upgradeable',
+    'expectedProxyAdminOrUpgradeAuthority',
+  ],
+  timelock_delay: ['timelockRequired', 'minTimelockDelaySec'],
+  implementation_hash: [
+    'upgradeable',
+    'expectedImplementation',
+    'expectedImplementationCodeHash',
+  ],
+  initializer_sealed: ['upgradeable'],
+};
+
+function applyDeclaredFieldScope(
+  results: CheckResult[],
+  declaredFields: readonly ManifestFieldKey[] | undefined,
+): CheckResult[] {
+  if (!declaredFields) return results;
+  const declared = new Set(declaredFields);
+  return results.map((result) => {
+    const fields = DEFAULT_DRIVEN_CHECK_FIELDS[result.checkKey];
+    if (!fields || fields.some((field) => declared.has(field))) return result;
+    return skipped(
+      result.checkKey,
+      result.title,
+      'Not declared',
+      result.actual,
+      result.evidence,
+      'This rule was not declared by the caller; manifest defaults are not treated as approved policy.',
+      'out_of_scope',
+    );
+  });
+}
+
+function hasDeclaredPolicy(
+  declaredFields: readonly ManifestFieldKey[] | undefined,
+): boolean {
+  if (!declaredFields) return true;
+  return declaredFields.some((field) => !IDENTITY_FIELDS.has(field));
 }
 
 
@@ -1555,7 +1613,7 @@ export function runPolicyChecks(
   facts: ObservedFacts,
   opts?: PolicyCheckOptions,
 ): { results: CheckResult[]; verdict: Verdict; coverage: Coverage } {
-  const results: CheckResult[] = [
+  const rawResults: CheckResult[] = [
     checkChainAndDeployer(manifest, facts, opts),
     checkOwner(manifest, facts, opts),
     checkPendingOwner(manifest, facts),
@@ -1573,9 +1631,18 @@ export function runPolicyChecks(
     checkSlippageBps(manifest, facts),
     ...checkAccessControlRoles(manifest, facts),
   ];
+  const results = applyDeclaredFieldScope(rawResults, opts?.declaredFields);
 
   // If no code, force blocked already via sanity/owner — keep results honest
-  const verdict = verdictOf(results);
+  const computedVerdict = verdictOf(results);
+  // Chain/address/source facts alone are useful evidence, but they are not an
+  // approved deployment policy. An API call with no declared rules can never
+  // produce Policy Matched.
+  const verdict = hasDeclaredPolicy(opts?.declaredFields)
+    ? computedVerdict
+    : computedVerdict === 'blocked'
+      ? 'blocked'
+      : 'review_required';
   const coverage = coverageOf(results);
   return { results, verdict, coverage };
 }

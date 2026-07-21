@@ -15,10 +15,7 @@ import {
 import { emptyManifest, type ManifestFields, type NetworkId, type ObservedFacts } from '../src/lib/policy/types';
 import { suggestedProjectName } from '../src/lib/utils/tokenLabel';
 import { normalizeAddress } from '../src/lib/utils/address';
-
-function parseNetwork(n: unknown): 'mainnet' | 'testnet' {
-  return n === 'testnet' ? 'testnet' : 'mainnet';
-}
+import { parseAgentNetwork } from './agentInput';
 
 const DISCLAIMER =
   'Shomer reads observable onchain state and drafts policy. This is not a security audit and does not claim the contract is safe. Drafts are never approved automatically.';
@@ -45,7 +42,19 @@ export async function runAgentRead(input: {
   contractAddress: string;
   blockNumber?: number | string;
 }): Promise<{ status: number; body: Record<string, unknown> }> {
-  const network = parseNetwork(input.network);
+  let network: NetworkId;
+  try {
+    network = parseAgentNetwork(input.network);
+  } catch (error) {
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        error: 'invalid_network',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
   const addr = normalizeAddress(input.contractAddress ?? '');
   if (!addr) {
     return {
@@ -143,7 +152,19 @@ export async function runAgentCreateDraft(input: {
   /** Reuse a preloaded facts snapshot (avoids a second RPC round-trip). */
   facts?: ObservedFacts;
 }): Promise<{ status: number; body: Record<string, unknown> }> {
-  const network = parseNetwork(input.network) as NetworkId;
+  let network: NetworkId;
+  try {
+    network = parseAgentNetwork(input.network);
+  } catch (error) {
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        error: 'invalid_network',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
   const addr = input.contractAddress ? normalizeAddress(input.contractAddress) : null;
   if (input.contractAddress && !addr) {
     return {
@@ -314,4 +335,3 @@ export function packsCatalogSlice() {
     },
   };
 }
-

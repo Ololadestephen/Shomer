@@ -29,6 +29,10 @@ import {
   verifyPayment,
 } from '../../../server/x402';
 import { injectProcessEnv, type WorkerEnv } from './env';
+import {
+  HttpRequestError,
+  readJsonRequest,
+} from '../../../server/httpSafety';
 
 const cors: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -83,12 +87,7 @@ export default {
         if (request.method !== 'POST') {
           return json(405, { ok: false, error: 'method_not_allowed' });
         }
-        let input: AgentVerifyRequest;
-        try {
-          input = (await request.json()) as AgentVerifyRequest;
-        } catch {
-          return json(400, { ok: false, error: 'invalid_json' });
-        }
+        const input = await readJsonRequest<AgentVerifyRequest>(request);
         const { status, body } = await runAgentVerify(input, 'free');
         return json(status, body);
       }
@@ -130,7 +129,7 @@ export default {
               {
                 ok: false,
                 error: 'payment_required',
-                x402Version: 1,
+                x402Version: 2,
                 accepts: requirements.accepts,
                 message:
                   'Payment required (x402 on X Layer). Retry with PAYMENT-SIGNATURE or X-PAYMENT.',
@@ -138,7 +137,6 @@ export default {
               },
               {
                 'PAYMENT-REQUIRED': encoded,
-                'Payment-Required': encoded,
               },
             );
           }
@@ -157,24 +155,24 @@ export default {
             });
           }
 
-          let input: AgentVerifyRequest;
-          try {
-            input = (await request.json()) as AgentVerifyRequest;
-          } catch {
-            return json(400, { ok: false, error: 'invalid_json' });
-          }
+          const input = await readJsonRequest<AgentVerifyRequest>(request);
 
           const { status, body } = await runAgentVerify(input, 'paid');
-          return json(status, {
-            ...body,
-            payment: {
-              settled:
-                paymentCheck.mode !== 'structural' || cfg.devBypass === true,
-              mode: paymentCheck.mode,
-              detail: paymentCheck.detail,
-              network: cfg.network,
+          return json(
+            status,
+            {
+              ...body,
+              payment: {
+                settled: true,
+                mode: paymentCheck.mode,
+                detail: paymentCheck.detail,
+                network: cfg.network,
+              },
             },
-          });
+            paymentCheck.responseHeader
+              ? { 'PAYMENT-RESPONSE': paymentCheck.responseHeader }
+              : undefined,
+          );
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           return json(500, {
@@ -198,12 +196,11 @@ export default {
         if (request.method !== 'POST') {
           return json(405, { ok: false, error: 'method_not_allowed' });
         }
-        let input: { network?: string; contractAddress: string; blockNumber?: number | string };
-        try {
-          input = (await request.json()) as typeof input;
-        } catch {
-          return json(400, { ok: false, error: 'invalid_json' });
-        }
+        const input = await readJsonRequest<{
+          network?: string;
+          contractAddress: string;
+          blockNumber?: number | string;
+        }>(request);
         const { status, body } = await runAgentRead(input);
         return json(status, body);
       }
@@ -213,12 +210,7 @@ export default {
         if (request.method !== 'POST') {
           return json(405, { ok: false, error: 'method_not_allowed' });
         }
-        let input: Parameters<typeof runAgentShipGate>[0];
-        try {
-          input = (await request.json()) as typeof input;
-        } catch {
-          return json(400, { ok: false, error: 'invalid_json' });
-        }
+        const input = await readJsonRequest<Parameters<typeof runAgentShipGate>[0]>(request);
         const { status, body } = await runAgentShipGate(input);
         return json(status, body);
       }
@@ -228,12 +220,7 @@ export default {
         if (request.method !== 'POST') {
           return json(405, { ok: false, error: 'method_not_allowed' });
         }
-        let input: Parameters<typeof runAgentCreateDraft>[0];
-        try {
-          input = (await request.json()) as typeof input;
-        } catch {
-          return json(400, { ok: false, error: 'invalid_json' });
-        }
+        const input = await readJsonRequest<Parameters<typeof runAgentCreateDraft>[0]>(request);
         const { status, body } = await runAgentCreateDraft(input);
         return json(status, body);
       }
@@ -245,6 +232,13 @@ export default {
           'Use GET /api/agent, GET /api/agent/packs, POST /api/agent/read, POST /api/agent/draft, POST /api/agent/ship-gate, POST /api/agent/verify, or POST /api/agent/verify/paid',
       });
     } catch (err) {
+      if (err instanceof HttpRequestError) {
+        return json(err.status, {
+          ok: false,
+          error: err.code,
+          message: err.message,
+        });
+      }
       const msg = err instanceof Error ? err.message : String(err);
       return json(500, { ok: false, error: 'server_error', message: msg });
     }

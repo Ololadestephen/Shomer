@@ -163,12 +163,22 @@ root runtime code hash. Explicit hashes must be 32-byte `0x` values.
    X402_NETWORK=xlayer          # → eip155:196
    # X402_NETWORK=xlayer-testnet  # → eip155:1952
    X402_PRICE_USD=0.01
-   X402_ASSET=USDC
-   # X402_FACILITATOR_URL=...   # optional; must support X Layer
+   X402_ASSET=0x74b7f16337b8972027f6196a17a631ac6de26d22
+   X402_ASSET_NAME=USD Coin
+   X402_ASSET_VERSION=2
+   X402_FACILITATOR_URL=https://web3.okx.com/api/v6/pay/x402
+   OKX_API_KEY=…
+   OKX_SECRET_KEY=…
+   OKX_PASSPHRASE=…
    ```
 2. Call without payment → **HTTP 402** + `PAYMENT-REQUIRED` header (network `eip155:196`).
-3. Client retries with `PAYMENT-SIGNATURE` or `X-PAYMENT` (USDC on X Layer).
+3. Client confirms payment through the **OKX Agent Payments Protocol**, then retries with the returned authorization header (USDC on X Layer).
 4. Local testing: `X402_DEV_BYPASS=1` accepts any non-empty payment header (**never in production**).
+
+Production fails closed when facilitator configuration or its authenticated OKX
+Payment API credentials are missing, unavailable, or do not explicitly confirm
+verification and settlement. A structurally plausible header never unlocks Deep
+Verification.
 
 ```bash
 # Expect 402 without payment
@@ -181,6 +191,7 @@ Fixtures:
 
 ```bash
 npm run test:paid
+npm run test:x402
 ```
 
 ## OKX.AI registration (A2MCP free + paid)

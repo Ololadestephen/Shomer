@@ -5,8 +5,13 @@ export interface WorkerEnv {
   X402_PRICE_USD?: string;
   X402_NETWORK?: string;
   X402_ASSET?: string;
+  X402_ASSET_NAME?: string;
+  X402_ASSET_VERSION?: string;
   X402_FACILITATOR_URL?: string;
   X402_DEV_BYPASS?: string;
+  OKX_API_KEY?: string;
+  OKX_SECRET_KEY?: string;
+  OKX_PASSPHRASE?: string;
   SERVICE_NAME?: string;
 }
 

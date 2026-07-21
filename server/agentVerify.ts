@@ -14,6 +14,7 @@ import {
 import {
   emptyManifest,
   type EvidenceRecord,
+  type ManifestFieldKey,
   type ManifestFields,
   type NetworkId,
   type ObservedFacts,
@@ -37,6 +38,7 @@ import {
   type RelatedContractInput,
   type ReviewedArtifactInput,
 } from './paidVerification';
+import { isPlainObject, parseAgentNetwork } from './agentInput';
 
 export interface AgentVerifyOptions {
   /**
@@ -201,7 +203,7 @@ function emptyCoverage(): AgentVerifyResponse['coverage'] {
 }
 
 export function parseNetwork(n: unknown): NetworkId {
-  return n === 'testnet' ? 'testnet' : 'mainnet';
+  return parseAgentNetwork(n);
 }
 
 function parseBlockPin(raw: unknown): number | undefined {
@@ -234,14 +236,56 @@ export type RunAgentVerifyOptions = {
    * full chain read — used by ship-gate composite.
    */
   facts?: ObservedFacts;
+  /**
+   * Raw policy keys before `emptyManifest()` defaults were applied. Composite
+   * tools pass this explicitly so draft/default values cannot become policy.
+   */
+  declaredPolicyFields?: readonly ManifestFieldKey[];
 };
+
+function declaredPolicyFields(
+  policy: Partial<ManifestFields> | undefined,
+  preset: Partial<ManifestFields> | null,
+): ManifestFieldKey[] {
+  const keys = new Set<ManifestFieldKey>();
+  for (const source of [preset, policy]) {
+    if (!source) continue;
+    for (const [key, value] of Object.entries(source)) {
+      if (value !== undefined) keys.add(key as ManifestFieldKey);
+    }
+  }
+  return [...keys];
+}
 
 export async function runAgentVerify(
   input: AgentVerifyRequest,
   tier: 'free' | 'paid',
   runOpts?: RunAgentVerifyOptions,
 ): Promise<{ status: number; body: AgentVerifyResponse }> {
-  const network = parseNetwork(input.network);
+  let network: NetworkId = 'mainnet';
+  try {
+    network = parseNetwork(input.network);
+  } catch (error) {
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        service: 'shomer',
+        tier,
+        network,
+        chainId: 196,
+        contractAddress: String(input.contractAddress ?? ''),
+        blockNumber: 0,
+        verdict: 'review_required',
+        coverage: emptyCoverage(),
+        results: [],
+        facts: emptyFacts(),
+        disclaimer: DISCLAIMER,
+        error: 'invalid_network',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
   const addr = normalizeAddress(input.contractAddress ?? '');
   const opts = parseOptions(input.options);
   let requestedBlock: number | undefined;
@@ -291,6 +335,76 @@ export async function runAgentVerify(
         message: 'contractAddress must be a valid 0x EVM address.',
       },
     };
+  }
+
+  if (input.policy !== undefined && !isPlainObject(input.policy)) {
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        service: 'shomer',
+        tier,
+        network,
+        chainId: network === 'mainnet' ? 196 : 1952,
+        contractAddress: addr,
+        blockNumber: 0,
+        requestedBlock,
+        verdict: 'review_required',
+        coverage: emptyCoverage(),
+        results: [],
+        facts: emptyFacts(),
+        disclaimer: DISCLAIMER,
+        error: 'invalid_policy',
+        message: 'policy must be a JSON object when provided.',
+      },
+    };
+  }
+
+  if (tier === 'paid' && input.relatedContracts !== undefined) {
+    if (!Array.isArray(input.relatedContracts)) {
+      return {
+        status: 400,
+        body: {
+          ok: false,
+          service: 'shomer',
+          tier,
+          network,
+          chainId: network === 'mainnet' ? 196 : 1952,
+          contractAddress: addr,
+          blockNumber: 0,
+          requestedBlock,
+          verdict: 'review_required',
+          coverage: emptyCoverage(),
+          results: [],
+          facts: emptyFacts(),
+          disclaimer: DISCLAIMER,
+          error: 'invalid_related_contracts',
+          message: 'relatedContracts must be an array.',
+        },
+      };
+    }
+    if (input.relatedContracts.length > 8) {
+      return {
+        status: 400,
+        body: {
+          ok: false,
+          service: 'shomer',
+          tier,
+          network,
+          chainId: network === 'mainnet' ? 196 : 1952,
+          contractAddress: addr,
+          blockNumber: 0,
+          requestedBlock,
+          verdict: 'review_required',
+          coverage: emptyCoverage(),
+          results: [],
+          facts: emptyFacts(),
+          disclaimer: DISCLAIMER,
+          error: 'too_many_related_contracts',
+          message: 'relatedContracts is limited to 8 entries.',
+        },
+      };
+    }
   }
 
   const reviewedArtifact = resolveReviewedArtifact(
@@ -365,10 +479,13 @@ export async function runAgentVerify(
       contractAddress: addr,
     });
 
+    const policyFields =
+      runOpts?.declaredPolicyFields ?? declaredPolicyFields(input.policy, preset);
+
     const core = runPolicyChecks(
       manifest,
       facts,
-      opts.check,
+      { ...opts.check, declaredFields: policyFields },
     );
 
     let results = core.results;

@@ -110,7 +110,7 @@ curl -i -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verif
   }'
 ```
 
-Then settle x402 on **X Layer USDC** and retry with `PAYMENT-SIGNATURE` / `X-PAYMENT`.
+Then confirm the X Layer USDC charge through the **OKX Agent Payments Protocol** and retry with the authorization header it returns. Never replay a charge without the required user confirmation.
 
 ---
 

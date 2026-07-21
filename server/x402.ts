@@ -21,12 +21,58 @@ export interface X402Config {
    * Testnet: `eip155:1952` or set X402_NETWORK explicitly.
    */
   network: string;
-  /** Asset symbol for description (typically USDC on X Layer) */
+  /** Settlement token contract address. */
   asset: string;
+  /** EIP-712 token domain name. */
+  assetName?: string;
+  /** EIP-712 token domain version. */
+  assetVersion?: string;
   /** Optional facilitator base URL for settlement verification */
   facilitatorUrl?: string;
+  /** OKX Payment API credentials when using the official facilitator. */
+  okxApiKey?: string;
+  okxSecretKey?: string;
+  okxPassphrase?: string;
   /** Local/dev only: accept any non-empty payment header */
   devBypass?: boolean;
+}
+
+export const XLAYER_USDC =
+  '0x74b7f16337b8972027f6196a17a631ac6de26d22';
+
+export interface VerifyPaymentOptions {
+  /** Injectable for deterministic tests. Defaults to global fetch. */
+  fetch?: typeof fetch;
+  /** Facilitator response deadline. */
+  timeoutMs?: number;
+}
+
+const MAX_FACILITATOR_RESPONSE_BYTES = 64 * 1024;
+
+async function readBoundedText(
+  response: Response,
+  maxBytes = MAX_FACILITATOR_RESPONSE_BYTES,
+): Promise<string> {
+  const declared = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw new Error('Facilitator response exceeded the 64 KiB limit');
+  }
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let size = 0;
+  let text = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel('response too large');
+      throw new Error('Facilitator response exceeded the 64 KiB limit');
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
 }
 
 /** Normalize human labels → CAIP-2 style when possible. */
@@ -50,13 +96,18 @@ export function loadX402Config(): X402Config | null {
     payTo,
     priceUsd: process.env.X402_PRICE_USD?.trim() || '$0.01',
     network: normalizeX402Network(process.env.X402_NETWORK),
-    asset: process.env.X402_ASSET?.trim() || 'USDC',
+    asset: process.env.X402_ASSET?.trim() || XLAYER_USDC,
+    assetName: process.env.X402_ASSET_NAME?.trim() || 'USD Coin',
+    assetVersion: process.env.X402_ASSET_VERSION?.trim() || '2',
     facilitatorUrl: process.env.X402_FACILITATOR_URL?.trim() || undefined,
+    okxApiKey: process.env.OKX_API_KEY?.trim() || undefined,
+    okxSecretKey: process.env.OKX_SECRET_KEY?.trim() || undefined,
+    okxPassphrase: process.env.OKX_PASSPHRASE?.trim() || undefined,
     devBypass: process.env.X402_DEV_BYPASS === '1' || process.env.X402_DEV_BYPASS === 'true',
   };
 }
 
-/** Build PaymentRequired object (x402-compatible shape). */
+/** Build the OKX.AI A2MCP v2 PaymentRequired shape. */
 export function buildPaymentRequired(
   cfg: X402Config,
   resource: string,
@@ -67,27 +118,106 @@ export function buildPaymentRequired(
   const atomic = String(Math.round(dollars * 1e6));
 
   return {
-    x402Version: 1,
+    x402Version: 2,
     error: 'Payment required to access Shomer paid verify',
+    resource: {
+      url: resource,
+      description,
+      mimeType: 'application/json',
+    },
     accepts: [
       {
         scheme: 'exact',
         network: cfg.network,
-        maxAmountRequired: atomic,
-        resource,
-        description,
-        mimeType: 'application/json',
+        amount: atomic,
         payTo: cfg.payTo,
-        maxTimeoutSeconds: 60,
+        maxTimeoutSeconds: 300,
         asset: cfg.asset,
         extra: {
-          name: 'Shomer paid verify',
-          price: cfg.priceUsd,
-          chain: 'X Layer',
-          chainId: cfg.network === 'eip155:1952' ? 1952 : 196,
+          name: cfg.assetName ?? 'USD Coin',
+          version: cfg.assetVersion ?? '2',
         },
       },
     ],
+  };
+}
+
+function decodePaymentPayload(paymentHeader: string): Record<string, unknown> | null {
+  const candidates = [paymentHeader];
+  try {
+    candidates.unshift(Buffer.from(paymentHeader, 'base64').toString('utf8'));
+  } catch {
+    /* raw JSON may still be accepted below */
+  }
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      /* try next representation */
+    }
+  }
+  return null;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  try {
+    return Buffer.from(bytes).toString('base64');
+  } catch {
+    let binary = '';
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary);
+  }
+}
+
+function facilitatorData(data: Record<string, unknown>): Record<string, unknown> {
+  const nested = data.data;
+  return nested && typeof nested === 'object' && !Array.isArray(nested)
+    ? nested as Record<string, unknown>
+    : data;
+}
+
+async function facilitatorHeaders(
+  cfg: X402Config,
+  url: string,
+  body: string,
+): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const target = new URL(url);
+  const officialOkx = target.hostname === 'web3.okx.com';
+  const credentials = [cfg.okxApiKey, cfg.okxSecretKey, cfg.okxPassphrase];
+  const hasAnyCredential = credentials.some(Boolean);
+  const hasAllCredentials = credentials.every(Boolean);
+  if ((officialOkx || hasAnyCredential) && !hasAllCredentials) {
+    throw new Error(
+      'Official OKX facilitator requires OKX_API_KEY, OKX_SECRET_KEY, and OKX_PASSPHRASE.',
+    );
+  }
+  if (!hasAllCredentials) return headers;
+
+  const timestamp = new Date().toISOString();
+  const requestPath = `${target.pathname}${target.search}`;
+  const prehash = `${timestamp}POST${requestPath}${body}`;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(cfg.okxSecretKey!),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(prehash),
+  );
+  return {
+    ...headers,
+    'OK-ACCESS-KEY': cfg.okxApiKey!,
+    'OK-ACCESS-SIGN': bytesToBase64(new Uint8Array(signature)),
+    'OK-ACCESS-PASSPHRASE': cfg.okxPassphrase!,
+    'OK-ACCESS-TIMESTAMP': timestamp,
   };
 }
 
@@ -124,14 +254,20 @@ export function getPaymentHeader(headers: Record<string, string | string[] | und
 /**
  * Verify payment payload.
  * - devBypass: non-empty header accepted (local only)
- * - facilitator: POST { paymentHeader, paymentRequirements } when configured
- * - else: structural check only (document as incomplete settlement)
+ * - facilitator: verify then settle when configured
+ * - else: fail closed
  */
 export async function verifyPayment(
   cfg: X402Config,
   paymentHeader: string,
   paymentRequirements: Record<string, unknown>,
-): Promise<{ ok: boolean; mode: string; detail?: string }> {
+  options?: VerifyPaymentOptions,
+): Promise<{
+  ok: boolean;
+  mode: string;
+  detail?: string;
+  responseHeader?: string;
+}> {
   if (!paymentHeader.trim()) {
     return { ok: false, mode: 'none', detail: 'Empty payment header' };
   }
@@ -145,31 +281,72 @@ export async function verifyPayment(
   }
 
   if (cfg.facilitatorUrl) {
+    const paymentPayload = decodePaymentPayload(paymentHeader);
+    const accepts = paymentRequirements.accepts;
+    const selectedRequirement = Array.isArray(accepts) ? accepts[0] : null;
+    if (!paymentPayload || !selectedRequirement) {
+      return {
+        ok: false,
+        mode: 'invalid_payment_payload',
+        detail: 'Payment authorization header is not decodable.',
+      };
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort('facilitator timeout'),
+      options?.timeoutMs ?? 10_000,
+    );
     try {
-      const url = `${cfg.facilitatorUrl.replace(/\/$/, '')}/verify`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          x402Version: 1,
-          paymentHeader,
-          paymentPayload: paymentHeader,
-          paymentRequirements,
-        }),
-      });
-      const text = await res.text();
-      let data: Record<string, unknown> = {};
-      try {
-        data = JSON.parse(text) as Record<string, unknown>;
-      } catch {
-        /* raw */
-      }
+      const base = cfg.facilitatorUrl.replace(/\/$/, '');
+      const fetchImpl = options?.fetch ?? fetch;
+      const payload = {
+        x402Version: 2,
+        paymentPayload,
+        paymentRequirements: selectedRequirement,
+      };
+      const callFacilitator = async (path: 'verify' | 'settle') => {
+        const url = `${base}/${path}`;
+        const body = JSON.stringify(
+          path === 'settle' ? { ...payload, syncSettle: true } : payload,
+        );
+        const headers = await facilitatorHeaders(cfg, url, body);
+        const response = await fetchImpl(url, {
+          method: 'POST',
+          headers,
+          signal: controller.signal,
+          body,
+        });
+        const text = await readBoundedText(response);
+        let data: Record<string, unknown> = {};
+        try {
+          data = JSON.parse(text) as Record<string, unknown>;
+        } catch {
+          /* explicit checks below reject non-JSON */
+        }
+        return { response, text, data };
+      };
+
+      const verification = await callFacilitator('verify');
+      const { response: res, text } = verification;
+      const data = facilitatorData(verification.data);
       if (res.ok && (data.isValid === true || data.valid === true || data.success === true)) {
-        return { ok: true, mode: 'facilitator', detail: text.slice(0, 300) };
-      }
-      // Some facilitators settle + return 200 with different shape
-      if (res.ok && !data.error) {
-        return { ok: true, mode: 'facilitator_ok', detail: text.slice(0, 300) };
+        const settlement = await callFacilitator('settle');
+        const settlementData = facilitatorData(settlement.data);
+        if (settlement.response.ok && settlementData.success === true) {
+          return {
+            ok: true,
+            mode: 'facilitator_settled',
+            detail: settlement.text.slice(0, 300),
+            responseHeader: encodePaymentRequired(settlementData),
+          };
+        }
+        return {
+          ok: false,
+          mode: 'facilitator_settle',
+          detail: settlementData.errorMessage || settlementData.errorReason || settlementData.error
+            ? String(settlementData.errorMessage ?? settlementData.errorReason ?? settlementData.error)
+            : `HTTP ${settlement.response.status}: settlement was not explicitly confirmed`,
+        };
       }
       return {
         ok: false,
@@ -179,28 +356,17 @@ export async function verifyPayment(
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { ok: false, mode: 'facilitator', detail: msg };
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
-  // Structural accept: payload present and decodable (agents can still complete free path)
-  try {
-    // May be base64 JSON or raw JSON
-    let raw = paymentHeader;
-    try {
-      raw = Buffer.from(paymentHeader, 'base64').toString('utf8');
-    } catch {
-      /* keep */
-    }
-    if (raw.length < 8) {
-      return { ok: false, mode: 'structural', detail: 'Payment payload too short' };
-    }
-    return {
-      ok: true,
-      mode: 'structural',
-      detail:
-        'Accepted non-empty payment header without facilitator. Set X402_FACILITATOR_URL for real settlement verification.',
-    };
-  } catch {
-    return { ok: false, mode: 'structural', detail: 'Invalid payment header' };
-  }
+  // Production must fail closed. A payment-looking string is not evidence of
+  // authorization or settlement.
+  return {
+    ok: false,
+    mode: 'facilitator_required',
+    detail:
+      'Payment verification is not configured. Set X402_FACILITATOR_URL or use the free endpoint.',
+  };
 }

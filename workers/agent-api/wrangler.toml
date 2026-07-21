@@ -1,7 +1,7 @@
 # Shomer A2MCP agent API on Cloudflare Workers (free + paid verify)
 name = "shomer-agent-api"
 main = "src/index.ts"
-compatibility_date = "2026-07-19"
+compatibility_date = "2026-07-21"
 compatibility_flags = ["nodejs_compat"]
 
 [observability]
@@ -17,11 +17,16 @@ head_sampling_rate = 0.1
 # Non-secret defaults (override per env)
 X402_NETWORK = "xlayer"
 X402_PRICE_USD = "0.01"
-X402_ASSET = "USDC"
+X402_ASSET = "0x74b7f16337b8972027f6196a17a631ac6de26d22"
+X402_ASSET_NAME = "USD Coin"
+X402_ASSET_VERSION = "2"
 X402_DEV_BYPASS = "0"
+X402_FACILITATOR_URL = "https://web3.okx.com/api/v6/pay/x402"
 SERVICE_NAME = "shomer"
 
 # Secrets (set via CLI — never commit):
 #   npx wrangler secret put OKLINK_API_KEY
 #   npx wrangler secret put X402_PAY_TO
-#   npx wrangler secret put X402_FACILITATOR_URL   # optional
+#   npx wrangler secret put OKX_API_KEY
+#   npx wrangler secret put OKX_SECRET_KEY
+#   npx wrangler secret put OKX_PASSPHRASE
