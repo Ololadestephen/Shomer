@@ -66,6 +66,19 @@ response = await call('/api/agent/verify', {
 assert.equal(response.status, 413);
 assert.equal((await response.json() as { error: string }).error, 'payload_too_large');
 
+// Paid requests must be validated before payment verification/settlement. A
+// malformed replay must return 400, not reach the facilitator and return 402.
+response = await call('/api/agent/verify/paid', {
+  method: 'POST',
+  headers: {
+    'content-type': 'application/json',
+    'PAYMENT-SIGNATURE': 'payment-looking-but-invalid',
+  },
+  body: '{broken',
+});
+assert.equal(response.status, 400);
+assert.equal((await response.json() as { error: string }).error, 'invalid_json');
+
 response = await call(
   '/api/agent/verify/paid',
   {

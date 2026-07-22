@@ -155,6 +155,17 @@ function mountAgentApi(middlewares: Connect.Server) {
             return;
           }
 
+          // Validate and retain the business request before touching payment.
+          // A malformed replay must never be verified or settled.
+          const raw = await readBody(req);
+          let input: AgentVerifyRequest;
+          try {
+            input = JSON.parse(raw || '{}') as AgentVerifyRequest;
+          } catch {
+            sendJson(res, 400, { ok: false, error: 'invalid_json' });
+            return;
+          }
+
           const headers = req.headers as Record<string, string | string[] | undefined>;
           const paymentHeader = getPaymentHeader(headers);
           const resource = `${publicBase(req)}/api/agent/verify/paid`;
@@ -174,6 +185,7 @@ function mountAgentApi(middlewares: Connect.Server) {
                 error: 'payment_required',
                 x402Version: 2,
                 accepts: requirements.accepts,
+                outputSchema: requirements.outputSchema,
                 message:
                   'Payment required (x402). Retry with PAYMENT-SIGNATURE or X-PAYMENT header after paying.',
                 freeAlternative: `${publicBase(req)}/api/agent/verify`,
@@ -193,15 +205,6 @@ function mountAgentApi(middlewares: Connect.Server) {
               message: paymentCheck.detail ?? 'Payment verification failed',
               mode: paymentCheck.mode,
             });
-            return;
-          }
-
-          const raw = await readBody(req);
-          let input: AgentVerifyRequest;
-          try {
-            input = JSON.parse(raw || '{}') as AgentVerifyRequest;
-          } catch {
-            sendJson(res, 400, { ok: false, error: 'invalid_json' });
             return;
           }
 

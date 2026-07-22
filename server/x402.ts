@@ -139,6 +139,45 @@ export function buildPaymentRequired(
         },
       },
     ],
+    // A2MCP clients use this metadata to preserve the original POST body when
+    // replaying the request with PAYMENT-SIGNATURE. Without it, some clients
+    // can replay an empty body after payment.
+    outputSchema: {
+      input: {
+        type: 'http',
+        method: 'POST',
+        bodyType: 'json',
+        body: {
+          type: 'object',
+          properties: {
+            network: {
+              type: 'string',
+              enum: ['mainnet', 'testnet'],
+              description: 'X Layer network containing the deployment.',
+            },
+            contractAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'Deployed EVM contract address to verify.',
+            },
+            projectName: { type: 'string' },
+            policy: { type: 'object' },
+            policyPreset: { type: 'string' },
+            blockNumber: {
+              oneOf: [{ type: 'integer' }, { type: 'string' }],
+            },
+            options: { type: 'object' },
+            reviewedArtifact: { type: 'object' },
+            deploymentArtifact: { type: 'object' },
+            relatedContracts: {
+              type: 'array',
+              maxItems: 8,
+            },
+          },
+          required: ['contractAddress'],
+        },
+      },
+    },
   };
 }
 

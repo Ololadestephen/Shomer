@@ -48,11 +48,21 @@ const encoded = challenge.headers.get('PAYMENT-REQUIRED');
 assert.ok(encoded, 'PAYMENT-REQUIRED header is present');
 const decoded = JSON.parse(Buffer.from(encoded!, 'base64').toString('utf8')) as {
   accepts: Array<Record<string, unknown>>;
+  outputSchema?: {
+    input?: {
+      method?: string;
+      bodyType?: string;
+      body?: { required?: string[] };
+    };
+  };
 };
 assert.equal(decoded.accepts[0]?.network, 'eip155:196');
 assert.equal(decoded.accepts[0]?.amount, '10000');
 assert.equal(decoded.accepts[0]?.asset, XLAYER_USDC);
 assert.equal(decoded.accepts[0]?.payTo, PAY_TO);
+assert.equal(decoded.outputSchema?.input?.method, 'POST');
+assert.equal(decoded.outputSchema?.input?.bodyType, 'json');
+assert.deepEqual(decoded.outputSchema?.input?.body?.required, ['contractAddress']);
 console.log('ok: paid route returns a valid X Layer payment challenge');
 
 const fakeProof = await worker.fetch(

@@ -109,6 +109,10 @@ export default {
             });
           }
 
+          // Validate and retain the business request before touching payment.
+          // A malformed replay must never be verified or settled.
+          const input = await readJsonRequest<AgentVerifyRequest>(request);
+
           const headerMap: Record<string, string | undefined> = {};
           request.headers.forEach((v, k) => {
             headerMap[k] = v;
@@ -131,6 +135,7 @@ export default {
                 error: 'payment_required',
                 x402Version: 2,
                 accepts: requirements.accepts,
+                outputSchema: requirements.outputSchema,
                 message:
                   'Payment required (x402 on X Layer). Retry with PAYMENT-SIGNATURE or X-PAYMENT.',
                 freeAlternative: `${base}/api/agent/verify`,
@@ -155,8 +160,6 @@ export default {
             });
           }
 
-          const input = await readJsonRequest<AgentVerifyRequest>(request);
-
           const { status, body } = await runAgentVerify(input, 'paid');
           return json(
             status,
@@ -174,6 +177,7 @@ export default {
               : undefined,
           );
         } catch (err) {
+          if (err instanceof HttpRequestError) throw err;
           const msg = err instanceof Error ? err.message : String(err);
           return json(500, {
             ok: false,
