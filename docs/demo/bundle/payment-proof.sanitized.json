@@ -34,6 +34,7 @@
       "transactionStatus": "SUCCESS"
     },
     "recoveredReport": {
+      "contractAddress": "0x5839244eab49314bccc0fa76e3a081cb1a461111",
       "reportId": "shomer-196-65954437-1ba7f41efd1f",
       "blockNumber": 65954437,
       "artifactComparison": "matched",

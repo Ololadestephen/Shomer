@@ -5,8 +5,8 @@
 <h1 align="center">Shomer</h1>
 
 <p align="center">
-  <strong>The deployment guardian for onchain teams.</strong><br />
-  Verify that the contract you actually shipped matches the security policy you approved.
+  <strong>The X Layer Ship Gate.</strong><br />
+  Agents and founders verify that the contract you actually shipped matches the policy you approved.
 </p>
 
 <p align="center">
@@ -75,7 +75,7 @@ Blank rules are **out of scope**, not green checks. Declared rules with missing 
 
 ---
 
-## See the product in 60 seconds
+## See the product in 90 seconds
 
 The fastest judge/reviewer path is completely offline: no RPC variability, wallet, payment, or secrets.
 
@@ -113,7 +113,7 @@ Shomer’s paid flow has settled on X Layer mainnet and recovered its report aft
 
 This is an important product property: **matching reviewed bytecode does not override a deployment-policy blocker**.
 
-The public, sanitized proof is in [`payment-proof.sanitized.json`](./docs/demo/bundle/payment-proof.sanitized.json). It contains no payment authorization, receipt capability, API key, or wallet credential.
+The public, sanitized proof — contract, payment transaction, recovered report, and verdict — is in [`payment-proof.sanitized.json`](./docs/demo/bundle/payment-proof.sanitized.json). It contains no payment authorization, receipt capability, API key, or wallet credential.
 
 ---
 

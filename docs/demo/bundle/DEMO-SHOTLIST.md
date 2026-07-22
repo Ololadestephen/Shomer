@@ -4,7 +4,7 @@
 **Public UI:** https://shomer-ui.pages.dev  
 **Public API:** https://shomer-agent-api.mixed-mouse.workers.dev  
 **Bundle dir:** `docs/demo/bundle/`  
-**Generated:** 2026-07-22T14:35:30.621Z
+**Generated:** 2026-07-22T15:19:13.510Z
 
 Open files with a large font. Prefer `jq` / VS Code / Preview. **Never** show `.env`, payment signatures, or API keys.
 

@@ -25,6 +25,8 @@ const WRONG_OWNER = '0x3333333333333333333333333333333333333333' as Address;
 const RUNTIME_HASH = (`0x${'ab'.repeat(32)}`) as Hex;
 const PUBLIC_BASE = 'https://shomer-agent-api.mixed-mouse.workers.dev';
 const PUBLIC_UI = 'https://shomer-ui.pages.dev';
+const PRODUCTION_CONTRACT =
+  '0x5839244eab49314bccc0fa76e3a081cb1a461111';
 const PRODUCTION_PAYMENT_TX =
   '0x665b7725059f61140ff2f39388feb7120e27691102c5cce05f7e7ea87a547987';
 const PRODUCTION_REPORT_ID = 'shomer-196-65954437-1ba7f41efd1f';
@@ -314,12 +316,14 @@ function paymentProofSanitized() {
         transactionStatus: 'SUCCESS',
       },
       recoveredReport: {
+        contractAddress: PRODUCTION_CONTRACT,
         reportId: PRODUCTION_REPORT_ID,
         blockNumber: PRODUCTION_BLOCK,
         artifactComparison: 'matched',
         runtimeCodeHash: PRODUCTION_RUNTIME_HASH,
         verdict: 'blocked',
-        verdictReason: 'Observed owner is the zero address; artifact identity does not override policy blockers.',
+        verdictReason:
+          'Observed owner is the zero address; artifact identity does not override policy blockers.',
       },
       recoveryNote:
         'The persisted report was recovered after the original client response was lost. No second payment was made.',
