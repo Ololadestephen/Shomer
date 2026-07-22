@@ -209,7 +209,7 @@ export default {
           const requirements = buildPaymentRequired(
             cfg,
             resource,
-            'Shomer paid X Layer deployment policy verification',
+            'Shomer Deep Verify — privilege map, artifact match, Auditor Brief (X Layer)',
           );
 
           if (!paymentHeader) {

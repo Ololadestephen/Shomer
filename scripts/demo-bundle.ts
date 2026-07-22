@@ -151,7 +151,7 @@ async function runPath(label: PathLabel, opts: {
   // Compact free-style report for terminal screenshots
   const freeReport = {
     demoPath: label,
-    service: 'shomer-verify (free-equivalent verdict surface)',
+    service: 'Shomer Verify',
     aspId: '6117',
     tier: 'free',
     network: body.network,
@@ -200,7 +200,7 @@ async function runPath(label: PathLabel, opts: {
   if (label === 'matched') {
     const paidProof = {
       demoPath: 'paid-artifact-match',
-      service: 'shomer-verify-paid',
+      service: 'Shomer Deep Verify',
       aspId: '6117',
       tier: 'paid',
       network: body.network,
@@ -260,7 +260,7 @@ function paymentProofSanitized() {
   // recorder's shell environment from changing what appears on screen.
   const cfg: X402Config = {
     payTo: '0x07cff11194d054a17e7e9ebee87a744830404d17',
-    priceUsd: '0.01',
+    priceUsd: '0.05',
     network: 'eip155:196',
     asset: '0x74b7f16337b8972027f6196a17a631ac6de26d22',
     assetName: 'USD Coin',
@@ -273,7 +273,7 @@ function paymentProofSanitized() {
   const challenge = buildPaymentRequired(
     cfg,
     resource,
-    'Shomer paid X Layer Deep Verification',
+    'Shomer Deep Verify — X Layer privilege map, artifact match, Auditor Brief',
   );
 
   const accepts = Array.isArray(challenge.accepts)
@@ -289,7 +289,7 @@ function paymentProofSanitized() {
       error: challenge.error ?? 'payment_required',
       network: accepts[0]?.network ?? cfg.network,
       asset: accepts[0]?.asset ?? cfg.asset,
-      amount: accepts[0]?.amount ?? '10000',
+      amount: accepts[0]?.amount ?? '50000',
       payTo: accepts[0]?.payTo ?? cfg.payTo,
       resource,
       freeAlternative: `${PUBLIC_BASE}/api/agent/verify`,
@@ -310,7 +310,8 @@ function paymentProofSanitized() {
         settled: true,
         mode: 'facilitator_settled',
         network: cfg.network,
-        amountUsd: cfg.priceUsd,
+        // Historical production settle was $0.01; current list/challenge price is $0.05
+        amountUsd: '0.01',
         asset: 'USDC',
         transactionHash: PRODUCTION_PAYMENT_TX,
         transactionStatus: 'SUCCESS',
@@ -365,7 +366,7 @@ Open files with a large font. Prefer \`jq\` / VS Code / Preview. **Never** show 
 | **22–38s** | Blocked | \`blocked.json\` — owner_matches blocked | “Wrong owner vs locked rules → **Blocked**. Agents must not ship.” |
 | **38–52s** | Review Required | \`review.json\` — undeclared privilege | “Undeclared privilege → **Review Required**. We never invent a pass.” |
 | **52–70s** | Paid artifact match | \`paid-artifact-match.sanitized.json\` + brief header | “Paid Deep Verification: privilege map + reviewed runtime hash **${by.matched?.artifactStatus ?? 'matched'}** + auditor brief.” |
-| **70–80s** | Payment proof | \`payment-proof.sanitized.json\` — 402 + receipt shape | “x402 on X Layer USDC ~$0.01. Free alternative always linked. No secrets on screen.” |
+| **70–80s** | Payment proof | \`payment-proof.sanitized.json\` — 402 + receipt shape | “x402 on X Layer USDC ~$0.05. Free alternative always linked. No secrets on screen.” |
 | **80–88s** | Recover | \`payment-proof.sanitized.json\` — settledReceipt.recoveredReport | “The client lost its response; Shomer recovered the persisted report without a second payment.” |
 | **88–90s** | End card | https://www.okx.ai/agents/6117 | “ASP **#6117** — free ship-gate, paid deep verification. Not audited. Not safe.” |
 

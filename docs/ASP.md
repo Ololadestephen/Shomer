@@ -163,7 +163,7 @@ root runtime code hash. Explicit hashes must be 32-byte `0x` values.
    X402_PAY_TO=0xYourReceivingWallet
    X402_NETWORK=xlayer          # → eip155:196
    # X402_NETWORK=xlayer-testnet  # → eip155:1952
-   X402_PRICE_USD=0.01
+   X402_PRICE_USD=0.05
    X402_ASSET=0x74b7f16337b8972027f6196a17a631ac6de26d22
    X402_ASSET_NAME=USD Coin
    X402_ASSET_VERSION=2
@@ -224,8 +224,8 @@ Help me register an A2MCP ASP on OKX.AI using OKX Agent Identity from Onchain OS
 
 Suggested services:
 
-1. **shomer-verify-free** → `POST {PUBLIC_URL}/api/agent/verify` (free)  
-2. **shomer-verify-paid** → `POST {PUBLIC_URL}/api/agent/verify/paid` (x402)
+1. **shomer** (Shomer Verify) → `POST {PUBLIC_URL}/api/agent/verify` (free, 0 USDT)  
+2. **shomer-paid** (Shomer Deep Verify) → `POST {PUBLIC_URL}/api/agent/verify/paid` (x402, **0.05 USDC** / listed **0.05 USDT**)
 
 Listing copy:
 

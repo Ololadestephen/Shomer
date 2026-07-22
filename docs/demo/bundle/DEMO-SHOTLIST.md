@@ -4,7 +4,7 @@
 **Public UI:** https://shomer-ui.pages.dev  
 **Public API:** https://shomer-agent-api.mixed-mouse.workers.dev  
 **Bundle dir:** `docs/demo/bundle/`  
-**Generated:** 2026-07-22T15:19:13.510Z
+**Generated:** 2026-07-22T15:29:34.007Z
 
 Open files with a large font. Prefer `jq` / VS Code / Preview. **Never** show `.env`, payment signatures, or API keys.
 
@@ -19,7 +19,7 @@ Open files with a large font. Prefer `jq` / VS Code / Preview. **Never** show `.
 | **22–38s** | Blocked | `blocked.json` — owner_matches blocked | “Wrong owner vs locked rules → **Blocked**. Agents must not ship.” |
 | **38–52s** | Review Required | `review.json` — undeclared privilege | “Undeclared privilege → **Review Required**. We never invent a pass.” |
 | **52–70s** | Paid artifact match | `paid-artifact-match.sanitized.json` + brief header | “Paid Deep Verification: privilege map + reviewed runtime hash **matched** + auditor brief.” |
-| **70–80s** | Payment proof | `payment-proof.sanitized.json` — 402 + receipt shape | “x402 on X Layer USDC ~$0.01. Free alternative always linked. No secrets on screen.” |
+| **70–80s** | Payment proof | `payment-proof.sanitized.json` — 402 + receipt shape | “x402 on X Layer USDC ~$0.05. Free alternative always linked. No secrets on screen.” |
 | **80–88s** | Recover | `payment-proof.sanitized.json` — settledReceipt.recoveredReport | “The client lost its response; Shomer recovered the persisted report without a second payment.” |
 | **88–90s** | End card | https://www.okx.ai/agents/6117 | “ASP **#6117** — free ship-gate, paid deep verification. Not audited. Not safe.” |
 

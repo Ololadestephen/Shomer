@@ -307,10 +307,13 @@ export function packsCatalogSlice() {
         },
       },
       {
-        name: 'verify_deployment',
+        name: 'shomer',
+        displayName: 'Shomer Verify',
         method: 'POST',
         path: '/api/agent/verify',
         tier: 'free',
+        description:
+          'Checks a live X Layer deployment against an approved launch policy and returns Blocked, Review Required, or Policy Matched with pinned-block evidence.',
       },
       {
         name: 'ship_gate',
@@ -318,20 +321,21 @@ export function packsCatalogSlice() {
         path: '/api/agent/ship-gate',
         tier: 'free',
         description:
-          'Composite free tool: optional pack draft + verify. Returns shipGate.allowed. Not paid Deep Verification.',
+          'Composite free tool: optional pack draft + verify. Returns shipGate.allowed. Not Shomer Deep Verify.',
       },
       {
-        name: 'verify_deployment_paid',
+        name: 'shomer-paid',
+        displayName: 'Shomer Deep Verify',
         method: 'POST',
         path: '/api/agent/verify/paid',
         tier: 'paid',
         description:
-          'Deep Verification: privilegeMap + reviewedArtifact + auditorBrief via x402.',
+          'Privilege map, reviewed-artifact/runtime-code-hash comparison, persisted Auditor Brief, and recoverable payment evidence via x402.',
       },
     ],
     freeVsPaid: {
-      free: 'packs, read, draft, verify, ship-gate — policy vs live + evidence',
-      paid: 'verify/paid — Deep Verification bundle (privilege map, artifact compare, auditor brief)',
+      free: 'Shomer Verify — packs, read, draft, verify, ship-gate — policy vs live + evidence',
+      paid: 'Shomer Deep Verify — privilege map, artifact compare, auditor brief, recovery',
     },
   };
 }

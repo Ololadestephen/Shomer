@@ -13,7 +13,7 @@
 export interface X402Config {
   /** Receiving wallet (EVM 0x…). Required for paid tier. */
   payTo: string;
-  /** Human price like "$0.01" */
+  /** Human price like "0.05" or "$0.05" (USDC on X Layer) */
   priceUsd: string;
   /**
    * Settlement network for x402.
@@ -107,7 +107,7 @@ export function loadX402Config(): X402Config | null {
   if (!payTo) return null;
   return {
     payTo,
-    priceUsd: process.env.X402_PRICE_USD?.trim() || '$0.01',
+    priceUsd: process.env.X402_PRICE_USD?.trim() || '0.05',
     network: normalizeX402Network(process.env.X402_NETWORK),
     asset: process.env.X402_ASSET?.trim() || XLAYER_USDC,
     assetName: process.env.X402_ASSET_NAME?.trim() || 'USD Coin',
@@ -126,8 +126,8 @@ export function buildPaymentRequired(
   resource: string,
   description: string,
 ): Record<string, unknown> {
-  // Amount: parse "$0.01" → atomic USDC (6 decimals) as string when possible
-  const dollars = Number(String(cfg.priceUsd).replace(/[^0-9.]/g, '')) || 0.01;
+  // Amount: parse "0.05" / "$0.05" → atomic USDC (6 decimals) as string when possible
+  const dollars = Number(String(cfg.priceUsd).replace(/[^0-9.]/g, '')) || 0.05;
   const atomic = String(Math.round(dollars * 1e6));
 
   // OKX A2MCP reads the legacy `outputSchema.input` map directly. Each

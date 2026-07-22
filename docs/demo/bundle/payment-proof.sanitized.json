@@ -7,7 +7,7 @@
     "error": "Payment required to access Shomer paid verify",
     "network": "eip155:196",
     "asset": "0x74b7f16337b8972027f6196a17a631ac6de26d22",
-    "amount": "10000",
+    "amount": "50000",
     "payTo": "0x07cff11194d054a17e7e9ebee87a744830404d17",
     "resource": "https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid",
     "freeAlternative": "https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify",
@@ -15,7 +15,7 @@
       {
         "scheme": "exact",
         "network": "eip155:196",
-        "amount": "10000",
+        "amount": "50000",
         "asset": "0x74b7f16337b8972027f6196a17a631ac6de26d22",
         "payTo": "0x07cff11194d054a17e7e9ebee87a744830404d17"
       }

@@ -28,7 +28,7 @@ Use this when the Onchain OS agent asks for name, description, services, and end
 
 ## Description (short — for marketplace card)
 
-Shomer is the **X Layer Ship Gate**: agents and founders verify that a live deployment matches the launch policy you approved (owner, Safe, upgrade, timelock, implementation). **Free:** packs, read, draft, verify, ship-gate. **Paid Deep Verification:** privilege map, reviewed artifact/code-hash, auditor brief (x402 USDC on X Layer). Not an audit. Never “safe.”
+Shomer is the **X Layer Ship Gate**: agents and founders verify that a live deployment matches the launch policy you approved. **Shomer Verify (free):** packs, read, draft, verify, ship-gate. **Shomer Deep Verify (paid ~0.05 USDT / 0.05 USDC x402):** privilege map, reviewed artifact/code-hash, Auditor Brief, recovery. Not an audit. Never “safe.”
 
 ---
 
@@ -54,19 +54,19 @@ This service does **not** audit Solidity, does **not** replace human review, and
 
 ## Services to register (A2MCP)
 
-### 1) Free — `shomer-verify` (primary for hackathon)
+### 1) Free — `shomer` / **Shomer Verify**
 
 | Field | Value |
 | --- | --- |
-| **Service name** | `shomer-verify` |
+| **Service name** | `shomer` (display: **Shomer Verify**) |
 | **Type** | A2MCP |
-| **Pricing** | **Free** |
+| **Pricing** | **Free** — `0` USDT |
 | **Method** | `POST` |
 | **Endpoint** | `https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify` |
 | **Content-Type** | `application/json` |
 
-**Service description:**  
-Free X Layer policy verification. Body: `network` (`mainnet`\|`testnet`), `contractAddress`, optional `policy` (partial launch manifest), optional `projectName`. Returns verdict, coverage, checks, facts summary, disclaimer.
+**Service description (paste):**  
+Checks a live X Layer deployment against an approved launch policy and returns Blocked, Review Required, or Policy Matched with pinned-block evidence. Provide the network, contract address, and approved policy.
 
 **Example body:**
 
@@ -83,26 +83,26 @@ Free X Layer policy verification. Body: `network` (`mainnet`\|`testnet`), `contr
 
 ---
 
-### 2) Paid — `shomer-verify-paid` (x402, X Layer USDC)
+### 2) Paid — `shomer-paid` / **Shomer Deep Verify**
 
 | Field | Value |
 | --- | --- |
-| **Service name** | `shomer-verify-paid` |
+| **Service name** | `shomer-paid` (display: **Shomer Deep Verify**) |
 | **Type** | A2MCP |
-| **Pricing** | **Paid** — `$0.01` USDC per call (x402) |
+| **Pricing** | **Paid** — **`0.05` USDT** listed · **`0.05` USDC** settled via x402 (must match) |
 | **Settlement network** | X Layer mainnet (`eip155:196`) — **not Base** |
 | **Method** | `POST` |
 | **Endpoint** | `https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid` |
 | **Content-Type** | `application/json` |
 | **Payment** | x402: without payment → HTTP **402** + `PAYMENT-REQUIRED`; retry with `PAYMENT-SIGNATURE` / `X-PAYMENT` |
 
-**Service description:**  
-Deep X Layer deployment verification with a bounded multi-contract privilege
-map, optional reviewed runtime artifact/code-hash comparison, and an
-auditor-ready JSON + Markdown evidence brief. Pay-per-call via x402 on X Layer.
+**Service description (paste):**  
+Adds reviewed-artifact and runtime-code-hash comparison, privilege mapping, a persisted Auditor Brief, and recoverable payment evidence. Provide the network, contract address, approved policy, and optional reviewed-artifact details.
+
+**Important:** Marketplace price and the Worker’s `X402_PRICE_USD` / payment challenge amount are both **0.05**. Do not list 0.05 while charging 0.01.
 
 **The same JSON body as free remains valid.** Paid callers may also provide
-`reviewedArtifact` / `deploymentArtifact` and `relatedContracts`.
+`reviewedArtifact` / scalar artifact aliases and `relatedContracts`.
 
 ---
 
@@ -132,28 +132,46 @@ npx skills add okx/onchainos-skills --yes -g
 Log in to Agentic Wallet on Onchain OS with my email
 ```
 
+### Update marketplace services (rename + price)
+
+```text
+Update my ASP #6117 A2MCP services on OKX.AI marketplace:
+
+1) Name: shomer (display Shomer Verify)
+   FREE · 0 USDT
+   POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify
+   Description: Checks a live X Layer deployment against an approved launch policy and returns Blocked, Review Required, or Policy Matched with pinned-block evidence. Provide the network, contract address, and approved policy.
+
+2) Name: shomer-paid (display Shomer Deep Verify)
+   PAID · 0.05 USDT (settlement: 0.05 USDC on eip155:196 via x402 — same amount)
+   POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid
+   Description: Adds reviewed-artifact and runtime-code-hash comparison, privilege mapping, a persisted Auditor Brief, and recoverable payment evidence. Provide the network, contract address, approved policy, and optional reviewed-artifact details.
+
+Rename away from shomer-verify / shomer-verify-paid if those still appear.
+```
+
 ### Register A2MCP
 
 ```text
 Help me register an A2MCP ASP on OKX.AI using OKX Agent Identity from Onchain OS.
 
 Name: Shomer
-Tagline: X Layer deployment policy verification for founders and agents
+Tagline: X Layer Ship Gate — policy vs live for founders and agents
 
 Description:
 Shomer verifies that a real X Layer deployment matches the launch policy you approved. It reads live onchain state (owner, Safe, upgrade authority, timelock, implementation) and returns Blocked, Review Required, or Policy Matched with evidence. Not an audit. Never claims "safe." Built for X Layer (chain 196).
 
 Services:
-1) shomer-verify — FREE A2MCP
+1) shomer — FREE A2MCP (Shomer Verify, 0 USDT)
    POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify
    JSON body: { "network": "mainnet"|"testnet", "contractAddress": "0x…", "policy": {optional fields}, "projectName": "optional" }
    Returns verdict, coverage, check results, facts, disclaimer.
 
-2) shomer-verify-paid — PAID A2MCP (x402, USDC on X Layer eip155:196, $0.01)
+2) shomer-paid — PAID A2MCP (Shomer Deep Verify, 0.05 USDT listed / 0.05 USDC x402 on eip155:196)
    POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid
-   Same body as free. Without payment returns HTTP 402 + PAYMENT-REQUIRED. Retry with payment headers.
+   Same body as free + optional reviewed artifact fields. Without payment returns HTTP 402 + PAYMENT-REQUIRED. Retry with payment headers.
 
-Default pricing: free service free; paid $0.01 USDC on X Layer via x402.
+Default pricing: free service free; paid 0.05 USDC on X Layer via x402 (must match marketplace 0.05).
 ```
 
 ### List on marketplace

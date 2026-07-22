@@ -7,7 +7,7 @@ import { FIXTURE_CONTRACT } from './fixtures/observedFacts';
 const baseEnv = {
   X402_PAY_TO: '0x1111111111111111111111111111111111111111',
   X402_NETWORK: 'xlayer',
-  X402_PRICE_USD: '0.01',
+  X402_PRICE_USD: '0.05',
   X402_ASSET: XLAYER_USDC,
   X402_DEV_BYPASS: '0',
 };

@@ -169,9 +169,9 @@ For automation, `shipGate.allowed` becomes `true` only when:
 - `approvedPolicy: true` was supplied; and
 - the request contains substantive explicit rules—not live-filled defaults.
 
-### Paid Deep Verification
+### Paid Deep Verification (Shomer Deep Verify)
 
-`POST /api/agent/verify/paid` costs approximately **$0.01 USDC on X Layer** (`eip155:196`) through the **OKX Agent Payments Protocol**.
+`POST /api/agent/verify/paid` costs **$0.05 USDC on X Layer** (`eip155:196`) through the **OKX Agent Payments Protocol**. Marketplace listing and x402 challenge use the **same** amount (display may show USDT; settlement is USDC).
 
 It uses the same deterministic verdict engine and adds:
 

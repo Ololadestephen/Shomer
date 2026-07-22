@@ -791,15 +791,40 @@ export async function runAgentVerify(
 }
 
 export function agentServiceCatalog(baseUrl: string) {
+  const paidPrice = process.env.X402_PRICE_USD?.trim() || '0.05';
   return {
     service: 'shomer',
     name: 'Shomer — X Layer Ship Gate · deployment policy verification',
     aspId: '6117',
     marketplace: 'OKX.AI',
     description:
-      'X Layer Ship Gate: agents verify live deployments against approved policy before shipping. Free: packs, read, draft, verify, ship-gate. Paid Deep Verification: privilege map, reviewed artifact/code-hash, auditor brief (x402 USDC on eip155:196). Not an audit; never claims safe.',
+      'X Layer Ship Gate: agents verify live deployments against approved policy before shipping. Free Shomer Verify: packs, read, draft, verify, ship-gate. Paid Shomer Deep Verify: privilege map, reviewed artifact/code-hash, auditor brief, recovery (x402 USDC on eip155:196). Not an audit; never claims safe.',
     tags: ['xlayer', 'policy', 'deployment', 'verification', 'a2mcp', 'x402'],
     network: 'X Layer mainnet (196) and testnet (1952)',
+    marketplaceServices: [
+      {
+        name: 'Shomer Verify',
+        marketplaceSlug: 'shomer',
+        tier: 'free',
+        pricing: '0',
+        currency: 'USDT',
+        description:
+          'Checks a live X Layer deployment against an approved launch policy and returns Blocked, Review Required, or Policy Matched with pinned-block evidence. Provide the network, contract address, and approved policy.',
+        path: '/api/agent/verify',
+      },
+      {
+        name: 'Shomer Deep Verify',
+        marketplaceSlug: 'shomer-paid',
+        tier: 'paid',
+        pricing: paidPrice,
+        currency: 'USDT',
+        settlementAsset: 'USDC',
+        settlementNetwork: 'eip155:196',
+        description:
+          'Adds reviewed-artifact and runtime-code-hash comparison, privilege mapping, a persisted Auditor Brief, and recoverable payment evidence. Provide the network, contract address, approved policy, and optional reviewed-artifact details. Listed and charged at the same price (x402 USDC on X Layer).',
+        path: '/api/agent/verify/paid',
+      },
+    ],
     policyPresets: listPolicyPresets(),
     policyPacks: listPolicyPacks().map((p) => ({ id: p.id, title: p.title, description: p.description, fields: p.fields })),
     ...packsCatalogSlice(),
@@ -807,10 +832,12 @@ export function agentServiceCatalog(baseUrl: string) {
       {
         path: '/api/agent/verify',
         method: 'POST',
+        name: 'Shomer Verify',
+        marketplaceSlug: 'shomer',
         tier: 'free',
         pricing: 'free',
         description:
-          'FREE Ship Gate verify: verdict, coverage, per-check evidence, facts, policyHash. No privilege map / auditor brief (those are paid).',
+          'Shomer Verify (free): checks a live X Layer deployment against an approved launch policy. Returns Blocked, Review Required, or Policy Matched with pinned-block evidence, coverage, facts, and policyHash. Privilege map / Auditor Brief require Shomer Deep Verify.',
         body: {
           network: 'mainnet | testnet',
           contractAddress: '0x…',
@@ -828,13 +855,15 @@ export function agentServiceCatalog(baseUrl: string) {
       {
         path: '/api/agent/verify/paid',
         method: 'POST',
+        name: 'Shomer Deep Verify',
+        marketplaceSlug: 'shomer-paid',
         tier: 'paid',
-        pricing: process.env.X402_PRICE_USD ?? '0.01',
+        pricing: paidPrice,
         currency: 'USDC',
         payment: 'x402',
         settlementNetwork: process.env.X402_NETWORK?.trim() || 'xlayer (eip155:196)',
         description:
-          'Paid Deep Verification on X Layer: bounded multi-contract privilege map, reviewed runtime artifact/code-hash comparison, and an auditor-ready JSON + Markdown evidence brief. Without payment returns HTTP 402 + PAYMENT-REQUIRED (USDC on eip155:196).',
+          `Shomer Deep Verify (paid ~$${paidPrice} USDC on eip155:196): same deterministic verdict engine plus privilege map, reviewed runtime artifact/code-hash comparison, persisted Auditor Brief, and payment recovery. Without payment returns HTTP 402 + PAYMENT-REQUIRED.`,
         body: {
           network: 'mainnet | testnet',
           contractAddress: '0x…',

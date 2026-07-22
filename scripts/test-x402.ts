@@ -11,7 +11,7 @@ import type { ReceiptDatabase, ReceiptStatement } from '../server/paymentReceipt
 const PAY_TO = '0x1111111111111111111111111111111111111111';
 const cfg: X402Config = {
   payTo: PAY_TO,
-  priceUsd: '0.01',
+  priceUsd: '0.05',
   network: 'eip155:196',
   asset: XLAYER_USDC,
   assetName: 'USD Coin',
@@ -19,7 +19,7 @@ const cfg: X402Config = {
 };
 const env = {
   X402_PAY_TO: PAY_TO,
-  X402_PRICE_USD: '0.01',
+  X402_PRICE_USD: '0.05',
   X402_NETWORK: 'xlayer',
   X402_ASSET: XLAYER_USDC,
   X402_ASSET_NAME: 'USD Coin',
@@ -66,7 +66,7 @@ const decoded = JSON.parse(Buffer.from(encoded!, 'base64').toString('utf8')) as 
   extensions?: { bazaar?: unknown };
 };
 assert.equal(decoded.accepts[0]?.network, 'eip155:196');
-assert.equal(decoded.accepts[0]?.amount, '10000');
+assert.equal(decoded.accepts[0]?.amount, '50000');
 assert.equal(decoded.accepts[0]?.asset, XLAYER_USDC);
 assert.equal(decoded.accepts[0]?.payTo, PAY_TO);
 assert.equal(decoded.outputSchema?.method, 'POST');

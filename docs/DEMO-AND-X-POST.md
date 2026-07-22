@@ -79,7 +79,7 @@ If `jq` isn’t available, drop the pipe and scroll the raw JSON.
 | --- | --- | --- |
 | Job | Ship gate: policy vs live | Deep Verification package |
 | Endpoints | verify, ship-gate, packs, read, draft | verify/paid |
-| Payment | none | x402 USDC eip155:196 · $0.01 |
+| Payment | none | x402 USDC eip155:196 · $0.05 |
 | Output | verdict + evidence + policyHash | + privilegeMap + artifactComparison + auditorBrief |
 
 Before recording, run `npm run demo:golden`. It proves all three verdicts with

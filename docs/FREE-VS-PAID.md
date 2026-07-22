@@ -2,7 +2,7 @@
 
 **Positioning:** X Layer **Ship Gate** — policy vs live chain. Not an audit. Never “safe.”
 
-## Free (primary)
+## Free — **Shomer Verify** (`shomer`)
 
 | Capability | Endpoint |
 | --- | --- |
@@ -13,24 +13,30 @@
 | Verify | `POST /api/agent/verify` |
 | Ship gate (draft+verify composite) | `POST /api/agent/ship-gate` |
 
+**Marketplace:** name `shomer` · display **Shomer Verify** · **0 USDT**
+
 **Returns:** verdict, coverage, per-check evidence, facts, `policyHash`.
 
 **Use for:** agents automating “can we treat this deploy as matching policy?”
 
-## Paid (Deep Verification)
+## Paid — **Shomer Deep Verify** (`shomer-paid`)
 
 | Capability | Endpoint |
 | --- | --- |
 | Deep verify | `POST /api/agent/verify/paid` |
-| Payment | x402 USDC on **X Layer** `eip155:196` · ~$0.01 |
+| Payment | x402 **USDC** on **X Layer** `eip155:196` · **$0.05** |
+
+**Marketplace:** name `shomer-paid` · display **Shomer Deep Verify** · **0.05 USDT**  
+**Settlement:** **0.05 USDC** via x402 — same amount as the listing (no split pricing).
 
 **Same core policy engine as free**, plus:
 
 - `deepVerification.privilegeMap` — bounded multi-contract privilege relationships + code probes  
 - `deepVerification.artifactComparison` — reviewed runtime/impl hash vs live  
 - `deepVerification.auditorBrief` — JSON + Markdown + content digest  
+- payment receipt + report recovery without a second charge  
 
-Optional body: `reviewedArtifact`, `relatedContracts`.
+Optional body: `reviewedArtifact`, scalar artifact aliases, `relatedContracts`.
 
 **Use for:** human-ready evidence packages, Foundry artifact confirmation, multi-address privilege context.
 

@@ -8,8 +8,8 @@ Use this when another agent must check whether a **live X Layer deployment** mat
 
 | Need | Tier | Endpoint |
 | --- | --- | --- |
-| Verdict + evidence, packs, draft, ship gate | **FREE** | below |
-| Privilege map + reviewed bytecode/impl hash + auditor brief (Markdown) | **PAID** | `POST …/verify/paid` + x402 USDC on **eip155:196** (~$0.01) |
+| Verdict + evidence, packs, draft, ship gate (**Shomer Verify**) | **FREE** | below |
+| Privilege map + reviewed bytecode/impl hash + auditor brief (**Shomer Deep Verify**) | **PAID** | `POST …/verify/paid` + x402 **0.05 USDC** on **eip155:196** |
 
 **Base:** `https://shomer-agent-api.mixed-mouse.workers.dev`
 
@@ -20,14 +20,14 @@ GET  /api/agent              → catalog
 GET  /api/agent/packs        → list_policy_packs
 POST /api/agent/read         → read_deployment_state (facts only)
 POST /api/agent/draft        → create_policy_draft (draft_only, never approved)
-POST /api/agent/verify       → verify_deployment
+POST /api/agent/verify       → shomer (Shomer Verify, free)
 POST /api/agent/ship-gate    → composite: optional pack draft + free verify + shipGate.allowed
 ```
 
 ### Paid tool
 
 ```text
-POST /api/agent/verify/paid  → Deep Verification (x402)
+POST /api/agent/verify/paid  → shomer-paid (Shomer Deep Verify, x402 0.05 USDC)
   body may include reviewedArtifact, relatedContracts
   response.deepVerification = { privilegeMap, artifactComparison, auditorBrief }
 GET  /api/agent/receipts/:receiptId → recover a settled paid report
