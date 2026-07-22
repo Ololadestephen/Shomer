@@ -1,0 +1,47 @@
+{
+  "demoPath": "payment-proof",
+  "note": "Sanitized unpaid challenge + production settlement proof. No PAYMENT-SIGNATURE, receipt capability, or authorization material.",
+  "unpaidChallenge": {
+    "httpStatus": 402,
+    "x402Version": 2,
+    "error": "Payment required to access Shomer paid verify",
+    "network": "eip155:196",
+    "asset": "0x74b7f16337b8972027f6196a17a631ac6de26d22",
+    "amount": "10000",
+    "payTo": "0x07cff11194d054a17e7e9ebee87a744830404d17",
+    "resource": "https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify/paid",
+    "freeAlternative": "https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify",
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "10000",
+        "asset": "0x74b7f16337b8972027f6196a17a631ac6de26d22",
+        "payTo": "0x07cff11194d054a17e7e9ebee87a744830404d17"
+      }
+    ]
+  },
+  "settledReceipt": {
+    "httpStatus": 200,
+    "tier": "paid",
+    "payment": {
+      "settled": true,
+      "mode": "facilitator_settled",
+      "network": "eip155:196",
+      "amountUsd": "0.01",
+      "asset": "USDC",
+      "transactionHash": "0x665b7725059f61140ff2f39388feb7120e27691102c5cce05f7e7ea87a547987",
+      "transactionStatus": "SUCCESS"
+    },
+    "recoveredReport": {
+      "reportId": "shomer-196-65954437-1ba7f41efd1f",
+      "blockNumber": 65954437,
+      "artifactComparison": "matched",
+      "runtimeCodeHash": "0x3b19c4c11b459cd1e52f991bbbe78a64b869aeaa7f483f3ab0c12d84120eee64",
+      "verdict": "blocked",
+      "verdictReason": "Observed owner is the zero address; artifact identity does not override policy blockers."
+    },
+    "recoveryNote": "The persisted report was recovered after the original client response was lost. No second payment was made."
+  },
+  "recordingTip": "On camera: show 402 challenge first, then jump to sanitized paid JSON (artifact match) without scrolling secrets."
+}

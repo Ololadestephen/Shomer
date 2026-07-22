@@ -18,3 +18,4 @@ Screenshot*.jpg
 docs/demo/hyper_work/
 docs/demo/*.mp4
 docs/demo/**/*.mp4
+# The sanitized docs/demo/bundle snapshot is intentionally tracked for recording.

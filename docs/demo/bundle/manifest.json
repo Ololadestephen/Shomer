@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-07-22T14:35:30.621Z",
+  "aspId": "6117",
+  "publicUi": "https://shomer-ui.pages.dev",
+  "publicApi": "https://shomer-agent-api.mixed-mouse.workers.dev",
+  "mode": "offline-fixtures+sanitized-production-proof",
+  "note": "Deterministic demo pack with a sanitized existing production receipt. Generation makes no RPC or payment call.",
+  "files": [
+    "matched.json",
+    "matched.brief.md",
+    "blocked.json",
+    "blocked.brief.md",
+    "review.json",
+    "review.brief.md",
+    "paid-artifact-match.sanitized.json",
+    "payment-proof.sanitized.json",
+    "DEMO-SHOTLIST.md",
+    "manifest.json"
+  ]
+}

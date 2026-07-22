@@ -1,0 +1,102 @@
+{
+  "demoPath": "blocked",
+  "service": "shomer-verify (free-equivalent verdict surface)",
+  "aspId": "6117",
+  "tier": "free",
+  "network": "mainnet",
+  "chainId": 196,
+  "contractAddress": "0x1111111111111111111111111111111111111111",
+  "blockNumber": 12345,
+  "verdict": "blocked",
+  "coverage": {
+    "matched": 5,
+    "review": 0,
+    "blocked": 1,
+    "skipped": 16,
+    "outOfScope": 16,
+    "evidenceMissing": 0,
+    "total": 22
+  },
+  "policyHash": "0xb327c7123a988c3ba64ad656b7b21c2e76c62edfaa3a27db35eb73200653df6e",
+  "projectName": "Demo — Wrong owner Blocked",
+  "facts": {
+    "owner": "0x2222222222222222222222222222222222222222",
+    "isProxy": false,
+    "codeHash": "0xabababababababababababababababababababababababababababababababab",
+    "hasCode": true,
+    "verification": "verified",
+    "tokenName": "Fixture Token",
+    "tokenSymbol": "FIX"
+  },
+  "results": [
+    {
+      "checkKey": "owner_matches",
+      "status": "blocked",
+      "title": "Owner matches declared Safe / owner",
+      "expected": "0x3333333333333333333333333333333333333333",
+      "actual": "0x2222222222222222222222222222222222222222",
+      "why": "Contract ownership does not match the address approved in the launch policy.",
+      "remediation": "Transfer ownership to 0x3333333333333333333333333333333333333333, then re-run verification.",
+      "evidence": {
+        "source": "owner()",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "upgrade_authority",
+      "status": "matched",
+      "title": "Upgrade authority matches policy",
+      "expected": "Not upgradeable",
+      "actual": "No EIP-1967 proxy detected",
+      "evidence": {
+        "source": "fixture EIP-1967 probe",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "implementation_hash",
+      "status": "matched",
+      "title": "Implementation / code hash",
+      "expected": "No specific implementation required (non-upgradeable)",
+      "actual": "Contract codehash 0xabababababababababababababababababababababababababababababababab",
+      "evidence": {
+        "source": "extcodehash / keccak256(bytecode)",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "address_sanity",
+      "status": "matched",
+      "title": "Address and chain sanity",
+      "expected": "No zero/placeholder/chain mismatch",
+      "actual": "No sanity flags raised",
+      "evidence": {
+        "source": "address heuristics + getCode + chainId",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "verification_status",
+      "status": "matched",
+      "title": "Source verification status recorded",
+      "expected": "Verified source preferred",
+      "actual": "Verified via fixture",
+      "evidence": {
+        "source": "fixture verification",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "reviewed_artifact_runtime_hash",
+      "status": "matched",
+      "title": "Reviewed artifact runtime code hash",
+      "expected": "0xabababababababababababababababababababababababababababababababab",
+      "actual": "0xabababababababababababababababababababababababababababababababab",
+      "evidence": {
+        "source": "keccak256(root runtime bytecode)",
+        "block": 12345
+      }
+    }
+  ],
+  "disclaimer": "Shomer compares declared policy to observable onchain state at a specific block. This is not a security audit and does not claim the contract is safe, correct, or free of vulnerabilities."
+}

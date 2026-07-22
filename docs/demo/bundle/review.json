@@ -1,0 +1,114 @@
+{
+  "demoPath": "review",
+  "service": "shomer-verify (free-equivalent verdict surface)",
+  "aspId": "6117",
+  "tier": "free",
+  "network": "mainnet",
+  "chainId": 196,
+  "contractAddress": "0x1111111111111111111111111111111111111111",
+  "blockNumber": 12345,
+  "verdict": "review_required",
+  "coverage": {
+    "matched": 6,
+    "review": 1,
+    "blocked": 0,
+    "skipped": 16,
+    "outOfScope": 16,
+    "evidenceMissing": 0,
+    "total": 23
+  },
+  "policyHash": "0x113fdf21f747ba88f84fedbee242ec05ca50c4cd2c8f68189a6e1b0867cb2253",
+  "projectName": "Demo — Undeclared privilege Review",
+  "facts": {
+    "owner": "0x2222222222222222222222222222222222222222",
+    "isProxy": false,
+    "codeHash": "0xabababababababababababababababababababababababababababababababab",
+    "hasCode": true,
+    "verification": "verified",
+    "tokenName": "Fixture Token",
+    "tokenSymbol": "FIX"
+  },
+  "results": [
+    {
+      "checkKey": "owner_matches",
+      "status": "matched",
+      "title": "Owner matches declared Safe / owner",
+      "expected": "0x2222222222222222222222222222222222222222",
+      "actual": "0x2222222222222222222222222222222222222222 · EOA",
+      "evidence": {
+        "source": "owner()",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "upgrade_authority",
+      "status": "matched",
+      "title": "Upgrade authority matches policy",
+      "expected": "Not upgradeable",
+      "actual": "No EIP-1967 proxy detected",
+      "evidence": {
+        "source": "fixture EIP-1967 probe",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "implementation_hash",
+      "status": "matched",
+      "title": "Implementation / code hash",
+      "expected": "No specific implementation required (non-upgradeable)",
+      "actual": "Contract codehash 0xabababababababababababababababababababababababababababababababab",
+      "evidence": {
+        "source": "extcodehash / keccak256(bytecode)",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "address_sanity",
+      "status": "matched",
+      "title": "Address and chain sanity",
+      "expected": "No zero/placeholder/chain mismatch",
+      "actual": "No sanity flags raised",
+      "evidence": {
+        "source": "address heuristics + getCode + chainId",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "verification_status",
+      "status": "matched",
+      "title": "Source verification status recorded",
+      "expected": "Verified source preferred",
+      "actual": "Verified via fixture",
+      "evidence": {
+        "source": "fixture verification",
+        "block": 12345
+      }
+    },
+    {
+      "checkKey": "role_pauser_role",
+      "status": "review",
+      "title": "Privileged role observed: PAUSER_ROLE (limited check)",
+      "expected": "Explicit role approval or intentional absence",
+      "actual": "PAUSER_ROLE held by 0x2222222222222222222222222222222222222222",
+      "why": "A privileged AccessControl role was detected, but the approved manifest does not declare role-specific authority. Approval of the same account as owner does not approve this separate privilege.",
+      "remediation": "Confirm and explicitly approve the role in a human review, or revoke it if it is unnecessary. Shomer does not infer role approval from another policy field.",
+      "evidence": {
+        "source": "getRoleMember(PAUSER_ROLE)",
+        "block": 12345,
+        "note": "Limited probe: common roles checked only against known privileged addresses (owner, proxy admin, etc.). Full role member enumeration (events / getRoleMember) not performed."
+      }
+    },
+    {
+      "checkKey": "reviewed_artifact_runtime_hash",
+      "status": "matched",
+      "title": "Reviewed artifact runtime code hash",
+      "expected": "0xabababababababababababababababababababababababababababababababab",
+      "actual": "0xabababababababababababababababababababababababababababababababab",
+      "evidence": {
+        "source": "keccak256(root runtime bytecode)",
+        "block": 12345
+      }
+    }
+  ],
+  "disclaimer": "Shomer compares declared policy to observable onchain state at a specific block. This is not a security audit and does not claim the contract is safe, correct, or free of vulnerabilities."
+}

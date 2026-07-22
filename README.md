@@ -223,6 +223,25 @@ npm run smoke          # live RPC sample
 npm run smoke:agent    # agent verify smoke
 ```
 
+### Demo recording pack
+
+```bash
+npm run demo:bundle
+```
+
+Writes sanitized artifacts to [`docs/demo/bundle/`](./docs/demo/bundle/):
+
+| File | Use on camera |
+| --- | --- |
+| `matched.json` / `matched.brief.md` | Policy Matched |
+| `blocked.json` / `blocked.brief.md` | Wrong owner → Blocked |
+| `review.json` / `review.brief.md` | Undeclared privilege → Review |
+| `paid-artifact-match.sanitized.json` | Paid Deep Verification |
+| `payment-proof.sanitized.json` | x402 402 + redacted receipt |
+| `DEMO-SHOTLIST.md` | 90s timing |
+
+Offline — no payment required. See [docs/TESTING.md](./docs/TESTING.md).
+
 ---
 
 ## Docs

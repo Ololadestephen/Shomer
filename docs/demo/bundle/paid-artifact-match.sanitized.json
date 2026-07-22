@@ -1,0 +1,112 @@
+{
+  "demoPath": "paid-artifact-match",
+  "service": "shomer-verify-paid",
+  "aspId": "6117",
+  "tier": "paid",
+  "network": "mainnet",
+  "chainId": 196,
+  "contractAddress": "0x1111111111111111111111111111111111111111",
+  "blockNumber": 12345,
+  "verdict": "policy_matched",
+  "coverage": {
+    "matched": 6,
+    "review": 0,
+    "blocked": 0,
+    "skipped": 16,
+    "outOfScope": 16,
+    "evidenceMissing": 0,
+    "total": 22
+  },
+  "policyHash": "0x8c45ef50b4b9d5262f816bc78423fc59581553f6b85661ab27213cfa9d0d9db1",
+  "reviewedArtifact": {
+    "name": "Pinned reviewed runtime (demo)",
+    "reviewedCommit": "demo-reviewed-commit",
+    "runtimeCodeHash": "0xabababababababababababababababababababababababababababababababab",
+    "note": "Hash matches live runtime codeHash at pinned block (fixture)."
+  },
+  "deepVerification": {
+    "version": "shomer-deep-verification/v1",
+    "features": [
+      "multi_contract_privilege_map",
+      "reviewed_artifact_comparison",
+      "auditor_brief"
+    ],
+    "artifactComparison": {
+      "status": "matched",
+      "artifactName": "Pinned reviewed runtime (demo)",
+      "reviewedCommit": "demo-reviewed-commit",
+      "expected": {
+        "runtimeCodeHash": "0xabababababababababababababababababababababababababababababababab",
+        "implementationAddress": null,
+        "implementationCodeHash": null
+      },
+      "actual": {
+        "runtimeCodeHash": "0xabababababababababababababababababababababababababababababababab",
+        "implementationAddress": null,
+        "implementationCodeHash": null
+      },
+      "checks": [
+        "reviewed_artifact_runtime_hash"
+      ]
+    },
+    "privilegeMap": {
+      "rootAddress": "0x1111111111111111111111111111111111111111",
+      "blockNumber": 12345,
+      "nodeCount": 2,
+      "edgeCount": 1,
+      "nodes": [
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "kind": "contract",
+          "labels": [
+            "root deployment"
+          ],
+          "roles": [],
+          "codeHash": "0xabababababababababababababababababababababababababababababababab",
+          "bytecodeSize": null
+        },
+        {
+          "address": "0x2222222222222222222222222222222222222222",
+          "kind": "eoa",
+          "labels": [
+            "owner"
+          ],
+          "roles": [],
+          "codeHash": null,
+          "bytecodeSize": 0
+        }
+      ],
+      "edges": [
+        {
+          "from": "0x1111111111111111111111111111111111111111",
+          "to": "0x2222222222222222222222222222222222222222",
+          "relationship": "owned_by",
+          "evidence": {
+            "source": "owner()",
+            "block": 12345,
+            "raw": "0x2222222222222222222222222222222222222222"
+          }
+        }
+      ],
+      "limitations": [
+        "Graph edges are derived from standard getters, EIP-1967 slots, Safe reads, and common AccessControl roles at the pinned block.",
+        "Role enumeration is complete only when AccessControlEnumerable is exposed; otherwise common roles are probed against known privileged addresses."
+      ]
+    },
+    "auditorBrief": {
+      "reportId": "shomer-196-12345-8c5c1ca6ee9c",
+      "contentDigest": "0x8c5c1ca6ee9c1f92d18bcc08f7c44ba3c33bacf6b6ed7208d7f33651bd75a5eb",
+      "verdict": "policy_matched",
+      "scope": {
+        "network": "mainnet",
+        "chainId": 196,
+        "blockNumber": 12345,
+        "contractAddress": "0x1111111111111111111111111111111111111111"
+      },
+      "findingsCount": 0,
+      "markdownPath": "matched.brief.md"
+    }
+  },
+  "disclaimer": "Shomer compares declared policy to observable onchain state at a specific block. This is not a security audit and does not claim the contract is safe, correct, or free of vulnerabilities.",
+  "sanitization": "No payment authorization headers, API keys, or facilitator secrets included."
+}

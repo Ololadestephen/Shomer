@@ -19,7 +19,15 @@ It emits three paid-tier Auditor Briefs at one pinned fixture block:
 - wrong owner/authority → **Blocked**;
 - an owner-held but undeclared `PAUSER_ROLE` → **Review Required**.
 
-It covers the policy engine, paid evidence bundle, ship-gate approval
+For **screen recording**, generate the full sanitized pack (JSON + briefs + payment proof + shot list):
+
+```bash
+npm run demo:bundle
+```
+
+Output: `docs/demo/bundle/` (offline; no payment or secrets).
+
+Default CI covers the policy engine, paid evidence bundle, ship-gate approval
 invariants, x402 challenge handling, malformed requests, body limits, bounded
 related-contract input, and upstream failure behavior.
 
