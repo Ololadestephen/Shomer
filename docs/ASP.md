@@ -181,6 +181,11 @@ The HTTP 402 metadata describes `network`, `contractAddress`, `policy`,
 (`carrier: "body"`). An A2MCP/x402 client should replay the original JSON body
 unchanged; no custom wrapper or query conversion is required.
 
+Scalar-only A2MCP clients can send `reviewedRuntimeCodeHash`,
+`reviewedImplementationAddress`, `reviewedImplementationCodeHash`,
+`reviewedArtifactName`, and `reviewedCommit` as flat JSON-body aliases. This
+avoids serializing a nested artifact object through a string-only parameter UI.
+
 Successful paid responses include `payment.receiptId`,
 `payment.transactionHash`, and `payment.retrievalUrl`. The Worker durably stores
 the generated report before settlement and the final transaction/report before

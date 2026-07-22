@@ -74,6 +74,7 @@ assert.equal(decoded.outputSchema?.bodyType, 'json');
 assert.equal(decoded.outputSchema?.input?.contractAddress?.carrier, 'body');
 assert.equal(decoded.outputSchema?.input?.contractAddress?.required, true);
 assert.equal(decoded.outputSchema?.input?.network?.carrier, 'body');
+assert.equal(decoded.outputSchema?.input?.reviewedRuntimeCodeHash?.carrier, 'body');
 assert.ok(decoded.extensions?.bazaar);
 console.log('ok: paid route returns a valid X Layer payment challenge');
 

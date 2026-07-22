@@ -76,6 +76,23 @@ hash in `reviewedArtifact.runtimeCodeHash` (or
 requires `deepVerification.artifactComparison.status === "matched"`, a pinned
 Auditor Brief, and a persisted payment transaction/receipt.
 
+### Production proof — 2026-07-22
+
+- Contract: `0x5839244eab49314bccc0fa76e3a081cb1a461111`
+- X Layer block: `65954437`
+- Reviewed/live runtime hash:
+  `0x3b19c4c11b459cd1e52f991bbbe78a64b869aeaa7f483f3ab0c12d84120eee64`
+- Artifact comparison: `matched`
+- Auditor Brief: `shomer-196-65954437-1ba7f41efd1f`
+- Payment transaction:
+  `0x665b7725059f61140ff2f39388feb7120e27691102c5cce05f7e7ea87a547987`
+- Recovery proof: the report was retrieved from D1 after the client lost the
+  original HTTP response; the payment was not repeated.
+
+The contract verdict itself was **Blocked** because its observed owner was the
+zero address. Artifact matching proves the reviewed bytecode identity only; it
+does not override deployment-policy blockers.
+
 ## CI
 
 `.github/workflows/ci.yml` runs Node 22, `npm ci`, and `npm run test:ci` on

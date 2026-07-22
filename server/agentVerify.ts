@@ -65,6 +65,12 @@ export interface AgentVerifyRequest {
   reviewedArtifact?: ReviewedArtifactInput;
   /** Paid alias for reviewedArtifact. */
   deploymentArtifact?: ReviewedArtifactInput;
+  /** Paid flat aliases for A2MCP clients whose known params are scalar-only. */
+  reviewedArtifactName?: string;
+  reviewedCommit?: string;
+  reviewedRuntimeCodeHash?: string;
+  reviewedImplementationAddress?: string;
+  reviewedImplementationCodeHash?: string;
   /** Paid: optional explicitly related contracts to add to the privilege map. */
   relatedContracts?: RelatedContractInput[];
 }
@@ -264,6 +270,62 @@ export interface AgentVerifyValidationError {
   message: string;
 }
 
+function reviewedArtifactInput(
+  input: AgentVerifyRequest,
+  tier: 'free' | 'paid',
+): ReviewedArtifactInput | undefined {
+  if (tier !== 'paid') return undefined;
+  const explicit = input.reviewedArtifact ?? input.deploymentArtifact;
+  if (explicit !== undefined) return explicit;
+  const hasFlatAlias = [
+    input.reviewedArtifactName,
+    input.reviewedCommit,
+    input.reviewedRuntimeCodeHash,
+    input.reviewedImplementationAddress,
+    input.reviewedImplementationCodeHash,
+  ].some((value) => typeof value === 'string' && value.trim().length > 0);
+  if (!hasFlatAlias) return undefined;
+  return {
+    name: input.reviewedArtifactName,
+    reviewedCommit: input.reviewedCommit,
+    runtimeCodeHash: input.reviewedRuntimeCodeHash,
+    implementationAddress: input.reviewedImplementationAddress,
+    implementationCodeHash: input.reviewedImplementationCodeHash,
+  };
+}
+
+function parseStructuredParam(
+  value: unknown,
+  kind: 'object' | 'array',
+): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (kind === 'array') return Array.isArray(parsed) ? parsed : value;
+    return isPlainObject(parsed) ? parsed : value;
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * Normalize structured A2MCP CLI params while preserving native JSON bodies.
+ * Some discovery clients expose every known `--param` as a string even when
+ * outputSchema declares an object/array. Direct callers remain unchanged.
+ */
+export function normalizeAgentVerifyRequest(input: unknown): AgentVerifyRequest {
+  if (!isPlainObject(input)) return { contractAddress: '' };
+  const raw = input as Record<string, unknown>;
+  return {
+    ...raw,
+    policy: parseStructuredParam(raw.policy, 'object'),
+    options: parseStructuredParam(raw.options, 'object'),
+    reviewedArtifact: parseStructuredParam(raw.reviewedArtifact, 'object'),
+    deploymentArtifact: parseStructuredParam(raw.deploymentArtifact, 'object'),
+    relatedContracts: parseStructuredParam(raw.relatedContracts, 'array'),
+  } as AgentVerifyRequest;
+}
+
 /** Pure request validation. It performs no RPC, payment, or persistence work. */
 export function validateAgentVerifyRequest(
   input: AgentVerifyRequest,
@@ -312,9 +374,7 @@ export function validateAgentVerifyRequest(
     }
   }
   const reviewedArtifact = resolveReviewedArtifact(
-    tier === 'paid'
-      ? input.reviewedArtifact ?? input.deploymentArtifact
-      : undefined,
+    reviewedArtifactInput(input, tier),
   );
   if (reviewedArtifact.errors.length > 0) {
     return {
@@ -516,9 +576,7 @@ export async function runAgentVerify(
   }
 
   const reviewedArtifact = resolveReviewedArtifact(
-    tier === 'paid'
-      ? input.reviewedArtifact ?? input.deploymentArtifact
-      : undefined,
+    reviewedArtifactInput(input, tier),
   );
   if (reviewedArtifact.errors.length > 0) {
     return {
@@ -785,6 +843,12 @@ export function agentServiceCatalog(baseUrl: string) {
           options: 'same as free',
           reviewedArtifact:
             'optional { name, reviewedCommit, runtimeCodeHash, implementationAddress, implementationCodeHash, deployedBytecode }',
+          reviewedRuntimeCodeHash:
+            'optional flat alias for reviewedArtifact.runtimeCodeHash (A2MCP scalar clients)',
+          reviewedImplementationAddress:
+            'optional flat alias for reviewedArtifact.implementationAddress',
+          reviewedImplementationCodeHash:
+            'optional flat alias for reviewedArtifact.implementationCodeHash',
           relatedContracts:
             'optional array of addresses or { address, label } (up to 8 request-supplied entries)',
         },

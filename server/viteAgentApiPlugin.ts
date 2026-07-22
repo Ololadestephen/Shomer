@@ -11,6 +11,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin, Connect } from 'vite';
 import {
   agentServiceCatalog,
+  normalizeAgentVerifyRequest,
   runAgentVerify,
   validateAgentVerifyRequest,
   type AgentVerifyRequest,
@@ -128,14 +129,9 @@ function mountAgentApi(middlewares: Connect.Server) {
           const raw = await readBody(req);
           let input: AgentVerifyRequest;
           try {
-            input = JSON.parse(raw || '{}') as AgentVerifyRequest;
+            input = normalizeAgentVerifyRequest(JSON.parse(raw || '{}'));
           } catch {
             sendJson(res, 400, { ok: false, error: 'invalid_json' });
-            return;
-          }
-          if (validateAgentVerifyRequest(input, 'paid')) {
-            const { status, body } = await runAgentVerify(input, 'paid');
-            sendJson(res, status, body);
             return;
           }
           const { status, body } = await runAgentVerify(input, 'free');
@@ -166,9 +162,14 @@ function mountAgentApi(middlewares: Connect.Server) {
           const raw = await readBody(req);
           let input: AgentVerifyRequest;
           try {
-            input = JSON.parse(raw || '{}') as AgentVerifyRequest;
+            input = normalizeAgentVerifyRequest(JSON.parse(raw || '{}'));
           } catch {
             sendJson(res, 400, { ok: false, error: 'invalid_json' });
+            return;
+          }
+          if (validateAgentVerifyRequest(input, 'paid')) {
+            const { status, body } = await runAgentVerify(input, 'paid');
+            sendJson(res, status, body);
             return;
           }
 

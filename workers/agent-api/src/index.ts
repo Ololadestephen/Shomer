@@ -12,6 +12,7 @@
  */
 import {
   agentServiceCatalog,
+  normalizeAgentVerifyRequest,
   runAgentVerify,
   validateAgentVerifyRequest,
   type AgentVerifyRequest,
@@ -164,7 +165,9 @@ export default {
         if (request.method !== 'POST') {
           return json(405, { ok: false, error: 'method_not_allowed' });
         }
-        const input = await readJsonRequest<AgentVerifyRequest>(request);
+        const input = normalizeAgentVerifyRequest(
+          await readJsonRequest<unknown>(request),
+        );
         const { status, body } = await runAgentVerify(input, 'free');
         return json(status, body);
       }
@@ -188,7 +191,9 @@ export default {
 
           // Validate and retain the business request before touching payment.
           // A malformed replay must never be verified or settled.
-          const input = await readJsonRequest<AgentVerifyRequest>(request);
+          const input = normalizeAgentVerifyRequest(
+            await readJsonRequest<unknown>(request),
+          );
           if (validateAgentVerifyRequest(input, 'paid')) {
             const { status, body } = await runAgentVerify(input, 'paid');
             return json(status, body);

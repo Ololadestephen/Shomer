@@ -103,6 +103,22 @@ assert.equal(
   'too_many_related_contracts',
 );
 
+// A2MCP CLIs may transport structured --param values as JSON strings. The
+// endpoint normalizes those back into the declared body objects before replay.
+response = await call('/api/agent/verify/paid', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({
+    network: 'mainnet',
+    contractAddress: FIXTURE_CONTRACT,
+    policy: JSON.stringify({ upgradeable: false }),
+    reviewedArtifact: JSON.stringify({
+      runtimeCodeHash: `0x${'ab'.repeat(32)}`,
+    }),
+  }),
+});
+assert.equal(response.status, 402);
+
 const upstreamFailure = await runAgentShipGate(
   { network: 'mainnet', contractAddress: FIXTURE_CONTRACT },
   { readFacts: async () => { throw new Error('RPC unavailable'); } },

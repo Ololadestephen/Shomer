@@ -6,6 +6,7 @@ import {
   privilegeProbeAddresses,
   resolveReviewedArtifact,
 } from '../server/paidVerification';
+import { runAgentVerify } from '../server/agentVerify';
 import { emptyManifest, type ObservedFacts } from '../src/lib/policy/types';
 
 const ROOT = '0x1111111111111111111111111111111111111111' as Address;
@@ -186,6 +187,26 @@ function assert(condition: boolean, message: string): void {
 {
   const artifact = resolveReviewedArtifact({ runtimeCodeHash: '0x1234' });
   assert(artifact.errors.length === 1, 'invalid reviewed hash rejected');
+}
+
+{
+  const result = await runAgentVerify(
+    {
+      network: 'mainnet',
+      contractAddress: ROOT,
+      reviewedArtifactName: 'Flat A2MCP runtime',
+      reviewedRuntimeCodeHash: ROOT_HASH,
+    },
+    'paid',
+    {
+      facts: facts(),
+      inspectRelatedAddresses: async () => [],
+    },
+  );
+  assert(
+    result.body.deepVerification?.artifactComparison.status === 'matched',
+    'flat A2MCP runtime hash alias matches live facts',
+  );
 }
 
 if (failed > 0) {

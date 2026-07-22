@@ -117,6 +117,18 @@ The 402 discovery metadata declares every business parameter with
 `carrier: "body"`. Payment clients should replay the **same JSON object** as the
 POST body; do not wrap it in `body`, `input`, `params`, or query parameters.
 
+For A2MCP clients that only accept scalar known parameters, reviewed-artifact
+comparison also supports these flat body aliases:
+
+- `reviewedArtifactName`
+- `reviewedCommit`
+- `reviewedRuntimeCodeHash`
+- `reviewedImplementationAddress`
+- `reviewedImplementationCodeHash`
+
+They map to the equivalent properties inside `reviewedArtifact`; direct API
+callers can continue sending the nested object.
+
 On success, persist these fields from `payment`:
 
 - `receiptId`
