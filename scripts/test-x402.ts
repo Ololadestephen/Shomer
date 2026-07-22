@@ -142,6 +142,41 @@ assert.equal(unsettled.ok, false);
 assert.equal(unsettled.mode, 'facilitator_settle');
 console.log('ok: verified but unconfirmed settlement remains locked');
 
+const phasedCalls: string[] = [];
+const phasedFetch: typeof fetch = async (input) => {
+  const url = String(input);
+  phasedCalls.push(url);
+  return new Response(
+    JSON.stringify(
+      url.endsWith('/verify')
+        ? { isValid: true }
+        : { success: true, transaction: '0xsettled-after-fulfillment' },
+    ),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  );
+};
+const authorization = await verifyPayment(
+  { ...cfg, facilitatorUrl: 'https://facilitator.test' },
+  Buffer.from(JSON.stringify({ accepted: decoded.accepts[0], payload: {} })).toString('base64'),
+  requirements,
+  { fetch: phasedFetch, phase: 'verify' },
+);
+assert.equal(authorization.ok, true);
+assert.equal(authorization.mode, 'facilitator_verified');
+assert.deepEqual(phasedCalls, ['https://facilitator.test/verify']);
+
+phasedCalls.length = 0;
+const postFulfillmentSettlement = await verifyPayment(
+  { ...cfg, facilitatorUrl: 'https://facilitator.test' },
+  Buffer.from(JSON.stringify({ accepted: decoded.accepts[0], payload: {} })).toString('base64'),
+  requirements,
+  { fetch: phasedFetch, phase: 'settle' },
+);
+assert.equal(postFulfillmentSettlement.ok, true);
+assert.equal(postFulfillmentSettlement.mode, 'facilitator_settled');
+assert.deepEqual(phasedCalls, ['https://facilitator.test/settle']);
+console.log('ok: authorization and settlement can bracket successful fulfillment');
+
 const officialCalls: Array<{ url: string; init?: RequestInit }> = [];
 const official = await verifyPayment(
   {

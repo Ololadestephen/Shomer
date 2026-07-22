@@ -197,7 +197,12 @@ function mountAgentApi(middlewares: Connect.Server) {
             return;
           }
 
-          const paymentCheck = await verifyPayment(cfg, paymentHeader, requirements);
+          const paymentCheck = await verifyPayment(
+            cfg,
+            paymentHeader,
+            requirements,
+            { phase: 'verify' },
+          );
           if (!paymentCheck.ok) {
             sendJson(res, 402, {
               ok: false,
@@ -209,6 +214,26 @@ function mountAgentApi(middlewares: Connect.Server) {
           }
 
           const { status, body } = await runAgentVerify(input, 'paid');
+          if (status < 200 || status >= 300 || body.ok !== true) {
+            sendJson(res, status, body);
+            return;
+          }
+
+          const settlement = await verifyPayment(
+            cfg,
+            paymentHeader,
+            requirements,
+            { phase: 'settle' },
+          );
+          if (!settlement.ok) {
+            sendJson(res, 402, {
+              ok: false,
+              error: 'payment_settlement_failed',
+              message: settlement.detail ?? 'Payment settlement failed',
+              mode: settlement.mode,
+            });
+            return;
+          }
           sendJson(
             res,
             status,
@@ -216,12 +241,12 @@ function mountAgentApi(middlewares: Connect.Server) {
               ...body,
               payment: {
                 settled: true,
-                mode: paymentCheck.mode,
-                detail: paymentCheck.detail,
+                mode: settlement.mode,
+                detail: settlement.detail,
               },
             },
-            paymentCheck.responseHeader
-              ? { 'PAYMENT-RESPONSE': paymentCheck.responseHeader }
+            settlement.responseHeader
+              ? { 'PAYMENT-RESPONSE': settlement.responseHeader }
               : undefined,
           );
           return;

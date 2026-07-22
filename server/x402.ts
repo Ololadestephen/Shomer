@@ -45,6 +45,8 @@ export interface VerifyPaymentOptions {
   fetch?: typeof fetch;
   /** Facilitator response deadline. */
   timeoutMs?: number;
+  /** Verify first, fulfill the resource, then settle only on success. */
+  phase?: 'verify' | 'settle' | 'verify_and_settle';
 }
 
 const MAX_FACILITATOR_RESPONSE_BYTES = 64 * 1024;
@@ -336,6 +338,7 @@ export async function verifyPayment(
       options?.timeoutMs ?? 10_000,
     );
     try {
+      const phase = options?.phase ?? 'verify_and_settle';
       const base = cfg.facilitatorUrl.replace(/\/$/, '');
       const fetchImpl = options?.fetch ?? fetch;
       const payload = {
@@ -365,32 +368,42 @@ export async function verifyPayment(
         return { response, text, data };
       };
 
-      const verification = await callFacilitator('verify');
-      const { response: res, text } = verification;
-      const data = facilitatorData(verification.data);
-      if (res.ok && (data.isValid === true || data.valid === true || data.success === true)) {
-        const settlement = await callFacilitator('settle');
-        const settlementData = facilitatorData(settlement.data);
-        if (settlement.response.ok && settlementData.success === true) {
+      if (phase !== 'settle') {
+        const verification = await callFacilitator('verify');
+        const { response: res, text } = verification;
+        const data = facilitatorData(verification.data);
+        if (!(res.ok && (data.isValid === true || data.valid === true || data.success === true))) {
           return {
-            ok: true,
-            mode: 'facilitator_settled',
-            detail: settlement.text.slice(0, 300),
-            responseHeader: encodePaymentRequired(settlementData),
+            ok: false,
+            mode: 'facilitator',
+            detail: data.error ? String(data.error) : `HTTP ${res.status}: ${text.slice(0, 200)}`,
           };
         }
+        if (phase === 'verify') {
+          return {
+            ok: true,
+            mode: 'facilitator_verified',
+            detail: text.slice(0, 300),
+          };
+        }
+      }
+
+      const settlement = await callFacilitator('settle');
+      const settlementData = facilitatorData(settlement.data);
+      if (settlement.response.ok && settlementData.success === true) {
         return {
-          ok: false,
-          mode: 'facilitator_settle',
-          detail: settlementData.errorMessage || settlementData.errorReason || settlementData.error
-            ? String(settlementData.errorMessage ?? settlementData.errorReason ?? settlementData.error)
-            : `HTTP ${settlement.response.status}: settlement was not explicitly confirmed`,
+          ok: true,
+          mode: 'facilitator_settled',
+          detail: settlement.text.slice(0, 300),
+          responseHeader: encodePaymentRequired(settlementData),
         };
       }
       return {
         ok: false,
-        mode: 'facilitator',
-        detail: data.error ? String(data.error) : `HTTP ${res.status}: ${text.slice(0, 200)}`,
+        mode: 'facilitator_settle',
+        detail: settlementData.errorMessage || settlementData.errorReason || settlementData.error
+          ? String(settlementData.errorMessage ?? settlementData.errorReason ?? settlementData.error)
+          : `HTTP ${settlement.response.status}: settlement was not explicitly confirmed`,
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

@@ -150,6 +150,7 @@ export default {
             cfg,
             paymentHeader,
             requirements,
+            { phase: 'verify' },
           );
           if (!paymentCheck.ok) {
             return json(402, {
@@ -161,19 +162,37 @@ export default {
           }
 
           const { status, body } = await runAgentVerify(input, 'paid');
+          if (status < 200 || status >= 300 || body.ok !== true) {
+            return json(status, body);
+          }
+
+          const settlement = await verifyPayment(
+            cfg,
+            paymentHeader,
+            requirements,
+            { phase: 'settle' },
+          );
+          if (!settlement.ok) {
+            return json(402, {
+              ok: false,
+              error: 'payment_settlement_failed',
+              message: settlement.detail ?? 'Payment settlement failed',
+              mode: settlement.mode,
+            });
+          }
           return json(
             status,
             {
               ...body,
               payment: {
                 settled: true,
-                mode: paymentCheck.mode,
-                detail: paymentCheck.detail,
+                mode: settlement.mode,
+                detail: settlement.detail,
                 network: cfg.network,
               },
             },
-            paymentCheck.responseHeader
-              ? { 'PAYMENT-RESPONSE': paymentCheck.responseHeader }
+            settlement.responseHeader
+              ? { 'PAYMENT-RESPONSE': settlement.responseHeader }
               : undefined,
           );
         } catch (err) {
