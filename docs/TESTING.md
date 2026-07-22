@@ -7,6 +7,18 @@ wallet calls:
 npm run test:ci
 ```
 
+The demo acceptance gate is also deterministic:
+
+```bash
+npm run demo:golden
+```
+
+It emits three paid-tier Auditor Briefs at one pinned fixture block:
+
+- approved owner and reviewed runtime hash → **Policy Matched**;
+- wrong owner/authority → **Blocked**;
+- an owner-held but undeclared `PAUSER_ROLE` → **Review Required**.
+
 It covers the policy engine, paid evidence bundle, ship-gate approval
 invariants, x402 challenge handling, malformed requests, body limits, bounded
 related-contract input, and upstream failure behavior.
@@ -20,6 +32,7 @@ related-contract input, and upstream failure behavior.
 | 2 · Contract fixtures | injected `ObservedFacts`, one `readFacts` spy | none |
 | 3 · Live X Layer | `npm run test:live:xlayer` | read-only RPC/explorer |
 | 4 · Paid boundary | `npm run test:x402` | none |
+| 4 · Receipt recovery | `npm run test:recovery` | none |
 | 4 · Live challenge/replay | `npm run test:live:x402` | challenge is free; replay is opt-in |
 | 5 · API failure modes | `npm run test:api` | none |
 
@@ -55,6 +68,13 @@ user has confirmed a payment through the **OKX Agent Payments Protocol**.
 
 Never put payment authorization values or secrets in source control, logs, CI,
 or shell history.
+
+For the production artifact proof, first read the live `codeHash` (or proxy
+`implementationCodeHash`) at a pinned block, then include that exact 32-byte
+hash in `reviewedArtifact.runtimeCodeHash` (or
+`reviewedArtifact.implementationCodeHash`) in the paid request. Acceptance
+requires `deepVerification.artifactComparison.status === "matched"`, a pinned
+Auditor Brief, and a persisted payment transaction/receipt.
 
 ## CI
 

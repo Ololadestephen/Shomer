@@ -1,7 +1,7 @@
 # Shomer A2MCP agent API on Cloudflare Workers (free + paid verify)
 name = "shomer-agent-api"
 main = "src/index.ts"
-compatibility_date = "2026-07-21"
+compatibility_date = "2026-07-22"
 compatibility_flags = ["nodejs_compat"]
 
 [observability]
@@ -23,6 +23,12 @@ X402_ASSET_VERSION = "2"
 X402_DEV_BYPASS = "0"
 X402_FACILITATOR_URL = "https://web3.okx.com/api/v6/pay/x402"
 SERVICE_NAME = "shomer"
+
+[[d1_databases]]
+binding = "SHOMER_RECEIPTS"
+database_name = "shomer-receipts"
+database_id = "8e0a505c-234a-4d04-9b61-30a9c92e3ebd"
+migrations_dir = "migrations"
 
 # Secrets (set via CLI — never commit):
 #   npx wrangler secret put OKLINK_API_KEY

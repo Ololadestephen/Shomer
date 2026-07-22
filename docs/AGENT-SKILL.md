@@ -30,6 +30,7 @@ POST /api/agent/ship-gate    → composite: optional pack draft + free verify + 
 POST /api/agent/verify/paid  → Deep Verification (x402)
   body may include reviewedArtifact, relatedContracts
   response.deepVerification = { privilegeMap, artifactComparison, auditorBrief }
+GET  /api/agent/receipts/:receiptId → recover a settled paid report
 ```
 
 ---
@@ -111,6 +112,21 @@ curl -i -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verif
 ```
 
 Then confirm the X Layer USDC charge through the **OKX Agent Payments Protocol** and retry with the authorization header it returns. Never replay a charge without the required user confirmation.
+
+The 402 discovery metadata declares every business parameter with
+`carrier: "body"`. Payment clients should replay the **same JSON object** as the
+POST body; do not wrap it in `body`, `input`, `params`, or query parameters.
+
+On success, persist these fields from `payment`:
+
+- `receiptId`
+- `transactionHash`
+- `retrievalUrl`
+
+If the client times out after paying, retry the identical POST with the same
+payment authorization or GET the capability-style `retrievalUrl`. Shomer stores
+the generated report before settlement and stores the settlement transaction
+before replying. The payment authorization itself is never stored.
 
 ---
 

@@ -82,6 +82,12 @@ If `jq` isn’t available, drop the pipe and scroll the raw JSON.
 | Payment | none | x402 USDC eip155:196 · $0.01 |
 | Output | verdict + evidence + policyHash | + privilegeMap + artifactComparison + auditorBrief |
 
+Before recording, run `npm run demo:golden`. It proves all three verdicts with
+pinned evidence and an Auditor Brief. For the paid clip, show
+`artifactComparison.status: "matched"` plus `payment.transactionHash`,
+`payment.receiptId`, and `payment.retrievalUrl`; this demonstrates that both the
+reviewed runtime and the purchase receipt are recoverable.
+
 ## B) X post (primary)
 
 **Copy-paste:**

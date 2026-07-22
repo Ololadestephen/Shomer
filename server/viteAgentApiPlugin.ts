@@ -12,6 +12,7 @@ import type { Plugin, Connect } from 'vite';
 import {
   agentServiceCatalog,
   runAgentVerify,
+  validateAgentVerifyRequest,
   type AgentVerifyRequest,
 } from './agentVerify';
 import {
@@ -132,6 +133,11 @@ function mountAgentApi(middlewares: Connect.Server) {
             sendJson(res, 400, { ok: false, error: 'invalid_json' });
             return;
           }
+          if (validateAgentVerifyRequest(input, 'paid')) {
+            const { status, body } = await runAgentVerify(input, 'paid');
+            sendJson(res, status, body);
+            return;
+          }
           const { status, body } = await runAgentVerify(input, 'free');
           sendJson(res, status, body);
           return;
@@ -184,8 +190,10 @@ function mountAgentApi(middlewares: Connect.Server) {
                 ok: false,
                 error: 'payment_required',
                 x402Version: 2,
+                resource: requirements.resource,
                 accepts: requirements.accepts,
                 outputSchema: requirements.outputSchema,
+                extensions: requirements.extensions,
                 message:
                   'Payment required (x402). Retry with PAYMENT-SIGNATURE or X-PAYMENT header after paying.',
                 freeAlternative: `${publicBase(req)}/api/agent/verify`,

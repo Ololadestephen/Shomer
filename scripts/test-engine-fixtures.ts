@@ -322,6 +322,28 @@ function assert(cond: boolean, msg: string) {
   assert(d.some((x) => x.key === 'upgradeable'), 'diff upgradeable');
 }
 
+// 15) an approved owner does not implicitly approve separate AccessControl roles
+{
+  const m = emptyManifest({
+    network: 'mainnet',
+    contractAddress: CONTRACT,
+    owner: OWNER,
+    upgradeable: false,
+  });
+  const roleEvidence = { source: 'getRoleMember(PAUSER_ROLE)', block: 65_000_000 };
+  const { results, verdict } = runPolicyChecks(
+    m,
+    baseFacts({
+      roles: [{ role: 'PAUSER_ROLE', holders: [OWNER], evidence: roleEvidence }],
+    }),
+  );
+  assert(
+    results.find((r) => r.checkKey === 'role_pauser_role')?.status === 'review',
+    'owner-held undeclared pauser role requires review',
+  );
+  assert(verdict === 'review_required', 'undeclared pauser role => review required');
+}
+
 if (failed) {
   console.error(`\n${failed} fixture(s) failed`);
   process.exit(1);

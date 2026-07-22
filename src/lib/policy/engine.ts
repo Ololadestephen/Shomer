@@ -1561,7 +1561,7 @@ function checkOraclePair(m: ManifestFields, f: ObservedFacts): CheckResult {
   };
 }
 
-function checkAccessControlRoles(m: ManifestFields, f: ObservedFacts): CheckResult[] {
+function checkAccessControlRoles(f: ObservedFacts): CheckResult[] {
   if (f.roles.length === 0) {
     return [];
   }
@@ -1569,40 +1569,28 @@ function checkAccessControlRoles(m: ManifestFields, f: ObservedFacts): CheckResu
   const results: CheckResult[] = [];
 
   // Note: this is a limited probe (common roles vs known addresses only).
+  // ManifestFields has no role-specific approvals. An approved owner address does
+  // not implicitly approve that account as pauser, minter, upgrader, or role
+  // administrator: those are separate privileges with different blast radii.
   for (const ro of f.roles) {
     const holdersStr = ro.holders.join(', ');
-    const expected = m.owner || m.expectedSafe || '—';
-    const isOnlyOwner = ro.holders.length === 1 && addressesEqual(ro.holders[0], expected);
 
     const evidenceNote = ro.evidence.note
       ? ro.evidence.note
       : 'Limited probe: common roles checked only against known privileged addresses (owner, proxy admin, etc.). Full role member enumeration (events / getRoleMember) not performed.';
 
-    if (isOnlyOwner) {
-      results.push({
-        id: `role_${ro.role}`,
-        checkKey: `role_${ro.role.toLowerCase()}`,
-        status: 'matched',
-        title: `Role ${ro.role} (limited check)`,
-        expected: expected,
-        actual: holdersStr,
-        evidence: { ...ro.evidence, note: evidenceNote },
-        severity: 'info',
-      });
-    } else {
-      results.push({
-        id: `role_${ro.role}`,
-        checkKey: `role_${ro.role.toLowerCase()}`,
-        status: 'review',
-        title: `Privileged role observed: ${ro.role} (limited check)`,
-        expected: 'Accounted for in launch policy or intentionally absent',
-        actual: `${ro.role} held by ${holdersStr}`,
-        evidence: { ...ro.evidence, note: evidenceNote },
-        why: 'A privileged role was detected on a known address via AccessControl. This probe only checks common roles against owner/admin/etc.; it does not discover every possible holder.',
-        remediation: 'Declare these roles explicitly in policy, verify they are intended, or revoke unnecessary privileges.',
-        severity: 'high',
-      });
-    }
+    results.push({
+      id: `role_${ro.role}`,
+      checkKey: `role_${ro.role.toLowerCase()}`,
+      status: 'review',
+      title: `Privileged role observed: ${ro.role} (limited check)`,
+      expected: 'Explicit role approval or intentional absence',
+      actual: `${ro.role} held by ${holdersStr}`,
+      evidence: { ...ro.evidence, note: evidenceNote },
+      why: 'A privileged AccessControl role was detected, but the approved manifest does not declare role-specific authority. Approval of the same account as owner does not approve this separate privilege.',
+      remediation: 'Confirm and explicitly approve the role in a human review, or revoke it if it is unnecessary. Shomer does not infer role approval from another policy field.',
+      severity: 'high',
+    });
   }
 
   return results;
@@ -1629,7 +1617,7 @@ export function runPolicyChecks(
     checkOraclePair(manifest, facts),
     checkFeeBps(manifest, facts),
     checkSlippageBps(manifest, facts),
-    ...checkAccessControlRoles(manifest, facts),
+    ...checkAccessControlRoles(facts),
   ];
   const results = applyDeclaredFieldScope(rawResults, opts?.declaredFields);
 

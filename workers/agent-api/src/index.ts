@@ -13,6 +13,7 @@
 import {
   agentServiceCatalog,
   runAgentVerify,
+  validateAgentVerifyRequest,
   type AgentVerifyRequest,
 } from '../../../server/agentVerify';
 import {
@@ -33,6 +34,15 @@ import {
   HttpRequestError,
   readJsonRequest,
 } from '../../../server/httpSafety';
+import {
+  beginPaidReceipt,
+  getPaidReceipt,
+  paymentReceiptIdentity,
+  savePaidReceiptError,
+  savePaidReport,
+  savePaidSettlement,
+  type PaidReceiptRecord,
+} from '../../../server/paymentReceipts';
 
 const cors: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +71,37 @@ function pathOf(url: URL): string {
   return url.pathname.replace(/\/$/, '') || '/';
 }
 
+function reportIdOf(body: Record<string, unknown>): string | null {
+  const deep = body.deepVerification;
+  if (!deep || typeof deep !== 'object' || Array.isArray(deep)) return null;
+  const brief = (deep as Record<string, unknown>).auditorBrief;
+  if (!brief || typeof brief !== 'object' || Array.isArray(brief)) return null;
+  const reportId = (brief as Record<string, unknown>).reportId;
+  return typeof reportId === 'string' ? reportId : null;
+}
+
+function recoveredBody(
+  record: PaidReceiptRecord,
+  base: string,
+): Record<string, unknown> | null {
+  if (!record.responseBody) return null;
+  const existing = record.responseBody.payment;
+  const payment = existing && typeof existing === 'object' && !Array.isArray(existing)
+    ? existing as Record<string, unknown>
+    : {};
+  return {
+    ...record.responseBody,
+    payment: {
+      ...payment,
+      settled: true,
+      recovered: true,
+      receiptId: record.receiptId,
+      transactionHash: record.transactionHash,
+      retrievalUrl: `${base}/api/agent/receipts/${record.receiptId}`,
+    },
+  };
+}
+
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     injectProcessEnv(env);
@@ -80,6 +121,42 @@ export default {
         (path === '/' || path === '/api/agent')
       ) {
         return json(200, agentServiceCatalog(base));
+      }
+
+      // Bearer-capability recovery URL returned after a paid verification.
+      if (request.method === 'GET' && path.startsWith('/api/agent/receipts/')) {
+        const receiptId = path.slice('/api/agent/receipts/'.length);
+        if (!/^shomer_[a-f0-9]{64}$/.test(receiptId)) {
+          return json(400, { ok: false, error: 'invalid_receipt_id' });
+        }
+        const record = await getPaidReceipt(env.SHOMER_RECEIPTS, receiptId);
+        if (!record) {
+          return json(404, { ok: false, error: 'receipt_not_found' });
+        }
+        if (record.state !== 'settled') {
+          return json(202, {
+            ok: true,
+            receiptId,
+            state: record.state,
+            message:
+              'Payment or report finalization is still pending. Retry the paid POST with the same payment authorization.',
+          });
+        }
+        const body = recoveredBody(record, base);
+        if (!body) {
+          return json(500, {
+            ok: false,
+            error: 'receipt_corrupt',
+            receiptId,
+          });
+        }
+        return json(
+          record.responseStatus ?? 200,
+          body,
+          record.paymentResponseHeader
+            ? { 'PAYMENT-RESPONSE': record.paymentResponseHeader }
+            : undefined,
+        );
       }
 
       // Free verify
@@ -112,6 +189,10 @@ export default {
           // Validate and retain the business request before touching payment.
           // A malformed replay must never be verified or settled.
           const input = await readJsonRequest<AgentVerifyRequest>(request);
+          if (validateAgentVerifyRequest(input, 'paid')) {
+            const { status, body } = await runAgentVerify(input, 'paid');
+            return json(status, body);
+          }
 
           const headerMap: Record<string, string | undefined> = {};
           request.headers.forEach((v, k) => {
@@ -134,8 +215,10 @@ export default {
                 ok: false,
                 error: 'payment_required',
                 x402Version: 2,
+                resource: requirements.resource,
                 accepts: requirements.accepts,
                 outputSchema: requirements.outputSchema,
+                extensions: requirements.extensions,
                 message:
                   'Payment required (x402 on X Layer). Retry with PAYMENT-SIGNATURE or X-PAYMENT.',
                 freeAlternative: `${base}/api/agent/verify`,
@@ -146,24 +229,78 @@ export default {
             );
           }
 
-          const paymentCheck = await verifyPayment(
-            cfg,
-            paymentHeader,
-            requirements,
-            { phase: 'verify' },
+          const identity = await paymentReceiptIdentity(paymentHeader, input);
+          let persisted = await getPaidReceipt(
+            env.SHOMER_RECEIPTS,
+            identity.receiptId,
           );
-          if (!paymentCheck.ok) {
-            return json(402, {
+          if (persisted && persisted.requestHash !== identity.requestHash) {
+            return json(409, {
               ok: false,
-              error: 'payment_invalid',
-              message: paymentCheck.detail ?? 'Payment verification failed',
-              mode: paymentCheck.mode,
+              error: 'payment_replay_mismatch',
+              message:
+                'This payment authorization is already associated with a different request body.',
+              receiptId: identity.receiptId,
             });
           }
+          if (persisted?.state === 'settled') {
+            const body = recoveredBody(persisted, base);
+            if (!body) {
+              return json(500, {
+                ok: false,
+                error: 'receipt_corrupt',
+                receiptId: identity.receiptId,
+              });
+            }
+            return json(
+              persisted.responseStatus ?? 200,
+              body,
+              persisted.paymentResponseHeader
+                ? { 'PAYMENT-RESPONSE': persisted.paymentResponseHeader }
+                : undefined,
+            );
+          }
 
-          const { status, body } = await runAgentVerify(input, 'paid');
-          if (status < 200 || status >= 300 || body.ok !== true) {
-            return json(status, body);
+          let reportStatus = persisted?.responseStatus ?? null;
+          let reportBody = persisted?.responseBody ?? null;
+
+          if (persisted?.state !== 'report_ready' || !reportBody || !reportStatus) {
+            const paymentCheck = await verifyPayment(
+              cfg,
+              paymentHeader,
+              requirements,
+              { phase: 'verify' },
+            );
+            if (!paymentCheck.ok) {
+              return json(402, {
+                ok: false,
+                error: 'payment_invalid',
+                message: paymentCheck.detail ?? 'Payment verification failed',
+                mode: paymentCheck.mode,
+              });
+            }
+
+            const { status, body } = await runAgentVerify(input, 'paid');
+            if (status < 200 || status >= 300 || body.ok !== true) {
+              return json(status, body);
+            }
+            persisted = await beginPaidReceipt(env.SHOMER_RECEIPTS, identity);
+            if (persisted.requestHash !== identity.requestHash) {
+              return json(409, {
+                ok: false,
+                error: 'payment_replay_mismatch',
+                receiptId: identity.receiptId,
+              });
+            }
+            reportStatus = status;
+            reportBody = { ...body };
+            await savePaidReport(env.SHOMER_RECEIPTS, {
+              receiptId: identity.receiptId,
+              responseStatus: status,
+              responseBody: reportBody,
+              reportId: reportIdOf(reportBody),
+              network: body.network,
+            });
           }
 
           const settlement = await verifyPayment(
@@ -173,24 +310,41 @@ export default {
             { phase: 'settle' },
           );
           if (!settlement.ok) {
+            await savePaidReceiptError(
+              env.SHOMER_RECEIPTS,
+              identity.receiptId,
+              settlement.detail ?? 'Payment settlement failed',
+            );
             return json(402, {
               ok: false,
               error: 'payment_settlement_failed',
               message: settlement.detail ?? 'Payment settlement failed',
               mode: settlement.mode,
+              receiptId: identity.receiptId,
             });
           }
-          return json(
-            status,
-            {
-              ...body,
-              payment: {
-                settled: true,
-                mode: settlement.mode,
-                detail: settlement.detail,
-                network: cfg.network,
-              },
+          const finalBody = {
+            ...reportBody,
+            payment: {
+              settled: true,
+              recovered: persisted?.state === 'report_ready',
+              mode: settlement.mode,
+              detail: settlement.detail,
+              network: cfg.network,
+              receiptId: identity.receiptId,
+              transactionHash: settlement.transactionHash ?? null,
+              retrievalUrl: `${base}/api/agent/receipts/${identity.receiptId}`,
             },
+          };
+          await savePaidSettlement(env.SHOMER_RECEIPTS, {
+            receiptId: identity.receiptId,
+            responseBody: finalBody,
+            paymentResponseHeader: settlement.responseHeader ?? null,
+            transactionHash: settlement.transactionHash ?? null,
+          });
+          return json(
+            reportStatus,
+            finalBody,
             settlement.responseHeader
               ? { 'PAYMENT-RESPONSE': settlement.responseHeader }
               : undefined,
@@ -252,7 +406,7 @@ export default {
         ok: false,
         error: 'not_found',
         message:
-          'Use GET /api/agent, GET /api/agent/packs, POST /api/agent/read, POST /api/agent/draft, POST /api/agent/ship-gate, POST /api/agent/verify, or POST /api/agent/verify/paid',
+          'Use GET /api/agent, GET /api/agent/receipts/:id, GET /api/agent/packs, POST /api/agent/read, POST /api/agent/draft, POST /api/agent/ship-gate, POST /api/agent/verify, or POST /api/agent/verify/paid',
       });
     } catch (err) {
       if (err instanceof HttpRequestError) {

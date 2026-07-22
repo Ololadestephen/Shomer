@@ -30,6 +30,7 @@ Use that for ASP registration:
 | --- | --- |
 | Free | `https://shomer-agent-api.<sub>.workers.dev/api/agent/verify` |
 | Paid | `https://shomer-agent-api.<sub>.workers.dev/api/agent/verify/paid` |
+| Paid receipt recovery | `https://shomer-agent-api.<sub>.workers.dev/api/agent/receipts/:receiptId` |
 | Catalog | `https://shomer-agent-api.<sub>.workers.dev/api/agent` |
 
 Local Worker preview (still uses Cloudflare, no tunnel to Vite):
@@ -175,6 +176,18 @@ root runtime code hash. Explicit hashes must be 32-byte `0x` values.
 3. Client confirms payment through the **OKX Agent Payments Protocol**, then retries with the returned authorization header (USDC on X Layer).
 4. Local testing: `X402_DEV_BYPASS=1` accepts any non-empty payment header (**never in production**).
 
+The HTTP 402 metadata describes `network`, `contractAddress`, `policy`,
+`projectName`, artifact fields, and related contracts as JSON-body parameters
+(`carrier: "body"`). An A2MCP/x402 client should replay the original JSON body
+unchanged; no custom wrapper or query conversion is required.
+
+Successful paid responses include `payment.receiptId`,
+`payment.transactionHash`, and `payment.retrievalUrl`. The Worker durably stores
+the generated report before settlement and the final transaction/report before
+returning it. After a network timeout, retry the identical paid request with the
+same authorization or GET the returned receipt URL. Reusing one authorization
+for a different request body returns `409 payment_replay_mismatch`.
+
 Production fails closed when facilitator configuration or its authenticated OKX
 Payment API credentials are missing, unavailable, or do not explicitly confirm
 verification and settlement. A structurally plausible header never unlocks Deep
@@ -192,6 +205,8 @@ Fixtures:
 ```bash
 npm run test:paid
 npm run test:x402
+npm run test:recovery
+npm run demo:golden
 ```
 
 ## OKX.AI registration (A2MCP free + paid)

@@ -49,6 +49,17 @@ export interface VerifyPaymentOptions {
   phase?: 'verify' | 'settle' | 'verify_and_settle';
 }
 
+export interface PaymentVerificationResult {
+  ok: boolean;
+  mode: string;
+  detail?: string;
+  responseHeader?: string;
+  /** Structured facilitator receipt, present after confirmed settlement. */
+  receipt?: Record<string, unknown>;
+  /** Normalized transaction hash when the facilitator returns one. */
+  transactionHash?: string;
+}
+
 const MAX_FACILITATOR_RESPONSE_BYTES = 64 * 1024;
 
 async function readBoundedText(
@@ -119,6 +130,79 @@ export function buildPaymentRequired(
   const dollars = Number(String(cfg.priceUsd).replace(/[^0-9.]/g, '')) || 0.01;
   const atomic = String(Math.round(dollars * 1e6));
 
+  // OKX A2MCP reads the legacy `outputSchema.input` map directly. Each
+  // business field must declare `carrier: "body"`; wrapping these fields in a
+  // JSON Schema object makes the client misidentify `type`, `method`,
+  // `bodyType`, and `body` themselves as query parameters.
+  const input = {
+    network: {
+      type: 'string',
+      required: false,
+      carrier: 'body',
+      enum: ['mainnet', 'testnet'],
+      description: 'X Layer network containing the deployment.',
+    },
+    contractAddress: {
+      type: 'string',
+      required: true,
+      carrier: 'body',
+      pattern: '^0x[a-fA-F0-9]{40}$',
+      description: 'Deployed EVM contract address to verify.',
+    },
+    projectName: {
+      type: 'string',
+      required: false,
+      carrier: 'body',
+    },
+    policy: {
+      type: 'object',
+      required: false,
+      carrier: 'body',
+      description: 'Optional partial approved Launch Manifest policy.',
+    },
+    policyPreset: {
+      type: 'string',
+      required: false,
+      carrier: 'body',
+    },
+    blockNumber: {
+      type: 'string',
+      required: false,
+      carrier: 'body',
+      description: 'Optional non-negative integer block pin.',
+    },
+    options: {
+      type: 'object',
+      required: false,
+      carrier: 'body',
+    },
+    reviewedArtifact: {
+      type: 'object',
+      required: false,
+      carrier: 'body',
+      description: 'Reviewed runtime or implementation artifact values.',
+    },
+    deploymentArtifact: {
+      type: 'object',
+      required: false,
+      carrier: 'body',
+      description: 'Alias for reviewedArtifact.',
+    },
+    relatedContracts: {
+      type: 'array',
+      required: false,
+      carrier: 'body',
+      maxItems: 8,
+    },
+  } as const;
+
+  const inputProperties = Object.fromEntries(
+    Object.entries(input).map(([name, field]) => {
+      const { carrier: _carrier, required: _required, ...schema } = field;
+      return [name, schema];
+    }),
+  );
+
   return {
     x402Version: 2,
     error: 'Payment required to access Shomer paid verify',
@@ -141,46 +225,76 @@ export function buildPaymentRequired(
         },
       },
     ],
-    // A2MCP clients use this metadata to preserve the original POST body when
-    // replaying the request with PAYMENT-SIGNATURE. Without it, some clients
-    // can replay an empty body after payment.
+    // OKX-compatible discovery metadata. `method` and `bodyType` describe the
+    // replay; `input` contains only business fields and their explicit carrier.
     outputSchema: {
-      input: {
-        type: 'http',
-        method: 'POST',
-        bodyType: 'json',
-        body: {
-          type: 'object',
-          properties: {
-            network: {
-              type: 'string',
-              enum: ['mainnet', 'testnet'],
-              description: 'X Layer network containing the deployment.',
-            },
-            contractAddress: {
-              type: 'string',
-              pattern: '^0x[a-fA-F0-9]{40}$',
-              description: 'Deployed EVM contract address to verify.',
-            },
-            projectName: { type: 'string' },
-            policy: { type: 'object' },
-            policyPreset: { type: 'string' },
-            blockNumber: {
-              oneOf: [{ type: 'integer' }, { type: 'string' }],
-            },
-            options: { type: 'object' },
-            reviewedArtifact: { type: 'object' },
-            deploymentArtifact: { type: 'object' },
-            relatedContracts: {
-              type: 'array',
-              maxItems: 8,
+      type: 'http',
+      method: 'POST',
+      bodyType: 'json',
+      input,
+    },
+    // Standards-compatible x402 v2 Bazaar discovery metadata. OKX currently
+    // consumes the compatibility shape above; other clients can use this
+    // extension without affecting payment settlement.
+    extensions: {
+      bazaar: {
+        info: {
+          input: {
+            type: 'http',
+            method: 'POST',
+            bodyType: 'json',
+            body: {
+              network: 'mainnet',
+              contractAddress: '0x0000000000000000000000000000000000000001',
+              policy: {},
             },
           },
-          required: ['contractAddress'],
+          output: {
+            type: 'json',
+            example: {
+              ok: true,
+              verdict: 'policy_matched',
+              blockNumber: 1,
+              deepVerification: {
+                version: 'shomer-deep-verification/v1',
+              },
+            },
+          },
+        },
+        schema: {
+          $schema: 'https://json-schema.org/draft/2020-12/schema',
+          type: 'object',
+          properties: {
+            input: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', const: 'http' },
+                method: { type: 'string', const: 'POST' },
+                bodyType: { type: 'string', const: 'json' },
+                body: {
+                  type: 'object',
+                  properties: inputProperties,
+                  required: ['contractAddress'],
+                },
+              },
+              required: ['type', 'method', 'bodyType', 'body'],
+            },
+          },
+          required: ['input'],
         },
       },
     },
   };
+}
+
+function settlementTransactionHash(data: Record<string, unknown>): string | undefined {
+  for (const key of ['transaction', 'transactionHash', 'txHash']) {
+    const value = data[key];
+    if (typeof value === 'string' && /^0x[a-fA-F0-9]{64}$/.test(value)) {
+      return value;
+    }
+  }
+  return undefined;
 }
 
 function decodePaymentPayload(paymentHeader: string): Record<string, unknown> | null {
@@ -303,12 +417,7 @@ export async function verifyPayment(
   paymentHeader: string,
   paymentRequirements: Record<string, unknown>,
   options?: VerifyPaymentOptions,
-): Promise<{
-  ok: boolean;
-  mode: string;
-  detail?: string;
-  responseHeader?: string;
-}> {
+): Promise<PaymentVerificationResult> {
   if (!paymentHeader.trim()) {
     return { ok: false, mode: 'none', detail: 'Empty payment header' };
   }
@@ -396,6 +505,8 @@ export async function verifyPayment(
           mode: 'facilitator_settled',
           detail: settlement.text.slice(0, 300),
           responseHeader: encodePaymentRequired(settlementData),
+          receipt: settlementData,
+          transactionHash: settlementTransactionHash(settlementData),
         };
       }
       return {

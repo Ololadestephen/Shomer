@@ -241,6 +241,8 @@ export type RunAgentVerifyOptions = {
    * tools pass this explicitly so draft/default values cannot become policy.
    */
   declaredPolicyFields?: readonly ManifestFieldKey[];
+  /** Injectable bounded privilege probes for deterministic golden-path tests. */
+  inspectRelatedAddresses?: typeof inspectRelatedAddresses;
 };
 
 function declaredPolicyFields(
@@ -257,11 +259,117 @@ function declaredPolicyFields(
   return [...keys];
 }
 
+export interface AgentVerifyValidationError {
+  error: string;
+  message: string;
+}
+
+/** Pure request validation. It performs no RPC, payment, or persistence work. */
+export function validateAgentVerifyRequest(
+  input: AgentVerifyRequest,
+  tier: 'free' | 'paid',
+): AgentVerifyValidationError | null {
+  try {
+    parseNetwork(input.network);
+  } catch (error) {
+    return {
+      error: 'invalid_network',
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+  if (!normalizeAddress(input.contractAddress ?? '')) {
+    return {
+      error: 'invalid_address',
+      message: 'contractAddress must be a valid 0x EVM address.',
+    };
+  }
+  try {
+    parseBlockPin(input.blockNumber);
+  } catch (error) {
+    return {
+      error: 'invalid_block',
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+  if (input.policy !== undefined && !isPlainObject(input.policy)) {
+    return {
+      error: 'invalid_policy',
+      message: 'policy must be a JSON object when provided.',
+    };
+  }
+  if (tier === 'paid' && input.relatedContracts !== undefined) {
+    if (!Array.isArray(input.relatedContracts)) {
+      return {
+        error: 'invalid_related_contracts',
+        message: 'relatedContracts must be an array.',
+      };
+    }
+    if (input.relatedContracts.length > 8) {
+      return {
+        error: 'too_many_related_contracts',
+        message: 'relatedContracts is limited to 8 entries.',
+      };
+    }
+  }
+  const reviewedArtifact = resolveReviewedArtifact(
+    tier === 'paid'
+      ? input.reviewedArtifact ?? input.deploymentArtifact
+      : undefined,
+  );
+  if (reviewedArtifact.errors.length > 0) {
+    return {
+      error: 'invalid_reviewed_artifact',
+      message: reviewedArtifact.errors.join(' '),
+    };
+  }
+  if (input.policyPreset && !resolvePolicyPreset(input.policyPreset)) {
+    return {
+      error: 'invalid_preset',
+      message: `Unknown policyPreset. Supported: ${listPolicyPresets().join(', ')}`,
+    };
+  }
+  return null;
+}
+
 export async function runAgentVerify(
   input: AgentVerifyRequest,
   tier: 'free' | 'paid',
   runOpts?: RunAgentVerifyOptions,
 ): Promise<{ status: number; body: AgentVerifyResponse }> {
+  const validation = validateAgentVerifyRequest(input, tier);
+  if (validation) {
+    let network: NetworkId = 'mainnet';
+    try {
+      network = parseNetwork(input.network);
+    } catch {
+      // The validation response still needs a stable chain context.
+    }
+    let requestedBlock: number | undefined;
+    try {
+      requestedBlock = parseBlockPin(input.blockNumber);
+    } catch {
+      // Invalid pins are represented by the validation error itself.
+    }
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        service: 'shomer',
+        tier,
+        network,
+        chainId: network === 'mainnet' ? 196 : 1952,
+        contractAddress: String(input.contractAddress ?? ''),
+        blockNumber: 0,
+        requestedBlock,
+        verdict: 'review_required',
+        coverage: emptyCoverage(),
+        results: [],
+        facts: emptyFacts(),
+        disclaimer: DISCLAIMER,
+        ...validation,
+      },
+    };
+  }
   let network: NetworkId = 'mainnet';
   try {
     network = parseNetwork(input.network);
@@ -502,7 +610,9 @@ export async function runAgentVerify(
         facts,
         input.relatedContracts,
       );
-      const inspections = await inspectRelatedAddresses({
+      const inspections = await (
+        runOpts?.inspectRelatedAddresses ?? inspectRelatedAddresses
+      )({
         network,
         addresses: probeAddresses,
         blockNumber: facts.blockNumber,

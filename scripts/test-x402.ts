@@ -6,6 +6,7 @@ import {
   verifyPayment,
   type X402Config,
 } from '../server/x402';
+import type { ReceiptDatabase, ReceiptStatement } from '../server/paymentReceipts';
 
 const PAY_TO = '0x1111111111111111111111111111111111111111';
 const cfg: X402Config = {
@@ -24,6 +25,15 @@ const env = {
   X402_ASSET_NAME: 'USD Coin',
   X402_ASSET_VERSION: '2',
   X402_DEV_BYPASS: '0',
+  SHOMER_RECEIPTS: {
+    prepare(): ReceiptStatement {
+      return {
+        bind() { return this; },
+        async first() { return null; },
+        async run() { return {}; },
+      };
+    },
+  } satisfies ReceiptDatabase,
 };
 
 // Ensure a developer shell setting cannot turn this deterministic test into a
@@ -49,20 +59,22 @@ assert.ok(encoded, 'PAYMENT-REQUIRED header is present');
 const decoded = JSON.parse(Buffer.from(encoded!, 'base64').toString('utf8')) as {
   accepts: Array<Record<string, unknown>>;
   outputSchema?: {
-    input?: {
-      method?: string;
-      bodyType?: string;
-      body?: { required?: string[] };
-    };
+    method?: string;
+    bodyType?: string;
+    input?: Record<string, { carrier?: string; required?: boolean }>;
   };
+  extensions?: { bazaar?: unknown };
 };
 assert.equal(decoded.accepts[0]?.network, 'eip155:196');
 assert.equal(decoded.accepts[0]?.amount, '10000');
 assert.equal(decoded.accepts[0]?.asset, XLAYER_USDC);
 assert.equal(decoded.accepts[0]?.payTo, PAY_TO);
-assert.equal(decoded.outputSchema?.input?.method, 'POST');
-assert.equal(decoded.outputSchema?.input?.bodyType, 'json');
-assert.deepEqual(decoded.outputSchema?.input?.body?.required, ['contractAddress']);
+assert.equal(decoded.outputSchema?.method, 'POST');
+assert.equal(decoded.outputSchema?.bodyType, 'json');
+assert.equal(decoded.outputSchema?.input?.contractAddress?.carrier, 'body');
+assert.equal(decoded.outputSchema?.input?.contractAddress?.required, true);
+assert.equal(decoded.outputSchema?.input?.network?.carrier, 'body');
+assert.ok(decoded.extensions?.bazaar);
 console.log('ok: paid route returns a valid X Layer payment challenge');
 
 const fakeProof = await worker.fetch(
