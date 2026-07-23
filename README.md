@@ -325,7 +325,7 @@ Shomer is live on X Layer, listed on OKX.AI as **ASP #6117**, callable by other 
 - [`AGENT-SKILL.md`](./docs/AGENT-SKILL.md) — instructions for calling agents
 - [`ASP.md`](./docs/ASP.md) — deployment, discovery, and payment integration
 - [`TESTING.md`](./docs/TESTING.md) — deterministic, live-chain, and paid proof gates
-- [`DEMO-AND-X-POST.md`](./docs/DEMO-AND-X-POST.md) — submission script and social copy
+- [`DEMO-SHOTLIST.md`](./docs/demo/bundle/DEMO-SHOTLIST.md) — final 90-second recording and export guide
 
 ---
 
