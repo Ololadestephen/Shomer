@@ -1626,10 +1626,37 @@
   .proof-layout.reverse .proof-ui {
     order: unset;
   }
-  .hub-stage { height: 360px; }
-  /* Tablet: 4 cards */
-  .hub-card.c2,
-  .hub-card.c5 { display: none; }
+  /* Keep all 6 orbit cards — tighter ring, still readable */
+  .hub-stage {
+    height: 380px;
+    width: min(560px, 100%);
+    margin-top: 20px;
+  }
+  .hub-card {
+    width: min(148px, 30vw);
+    padding: 10px 11px;
+  }
+  .hub-card .hub-tag { font-size: 8px; margin-bottom: 4px; }
+  .hub-card strong { font-size: 12px; }
+  .hub-card small { font-size: 10px; }
+  .hub-card.c1 { left: 2%; top: 14%; }
+  .hub-card.c2 { right: 2%; top: 14%; left: auto; }
+  .hub-card.c3 { left: 50%; top: 2%; transform: translateX(-50%); }
+  .hub-card.c4 { left: 2%; bottom: 14%; top: auto; }
+  .hub-card.c5 { right: 2%; bottom: 14%; top: auto; left: auto; }
+  .hub-card.c6 { left: 50%; bottom: 2%; top: auto; transform: translateX(-50%); }
+  .hub-card.focus.c1,
+  .hub-card.focus.c2,
+  .hub-card.focus.c4,
+  .hub-card.focus.c5 {
+    transform: scale(1.04);
+  }
+  .hub-card.focus.c3,
+  .hub-card.focus.c6 {
+    transform: translateX(-50%) scale(1.04);
+  }
+  .hub-core { width: 76px; height: 76px; }
+  .hub-mark { width: 36px; height: 40px; }
   .vm-row { grid-template-columns: 88px 1fr; }
   .vm-row code { display: none; }
   .landing-verify-form { flex-direction: column; align-items: stretch; }
@@ -1637,18 +1664,84 @@
 }
 
 @media (max-width: 580px) {
-  .landing-hero.hub-hero { padding-top: 110px; }
+  .landing-hero.hub-hero {
+    padding-top: 100px;
+    padding-bottom: 36px;
+  }
   .hub-hero h1 { font-size: 32px; }
-  .hub-stage { height: 280px; }
-  .hub-card { width: 148px; padding: 10px 12px; }
-  /* Phone: mark + 3 chips only */
-  .hub-card.c2,
-  .hub-card.c4,
-  .hub-card.c5 { display: none; }
-  .hub-card.c1 { left: 2%; top: 22%; }
-  .hub-card.c3 { left: 50%; top: 8%; }
-  .hub-card.c6 { left: 50%; bottom: 8%; right: auto; }
-  .hub-core { width: 72px; height: 72px; }
+  .landing-ctas {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .landing-ctas .landing-primary,
+  .landing-ctas .landing-ghost {
+    min-height: 44px;
+  }
+  /* Phone: full 6-card orbit (no more 3-card cutdown) */
+  .hub-stage {
+    height: 340px;
+    width: 100%;
+    max-width: 380px;
+    margin-top: 18px;
+  }
+  .hub-card {
+    width: min(132px, 38vw);
+    padding: 8px 9px;
+    border-radius: 12px;
+  }
+  .hub-card .hub-tag {
+    font-size: 7px;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+  }
+  .hub-card strong {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+  .hub-card small {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  /* Hex-ish ring around core — all six visible */
+  .hub-card.c1 { left: 0; top: 18%; right: auto; bottom: auto; }
+  .hub-card.c2 { right: 0; top: 18%; left: auto; bottom: auto; }
+  .hub-card.c3 { left: 50%; top: 0; right: auto; bottom: auto; transform: translateX(-50%); }
+  .hub-card.c4 { left: 0; bottom: 16%; top: auto; right: auto; }
+  .hub-card.c5 { right: 0; bottom: 16%; top: auto; left: auto; }
+  .hub-card.c6 { left: 50%; bottom: 0; top: auto; right: auto; transform: translateX(-50%); }
+  .hub-card.focus.c1,
+  .hub-card.focus.c2,
+  .hub-card.focus.c4,
+  .hub-card.focus.c5 {
+    transform: scale(1.06);
+  }
+  .hub-card.focus.c3,
+  .hub-card.focus.c6 {
+    transform: translateX(-50%) scale(1.06);
+  }
+  .hub-card.dim {
+    filter: blur(0.6px);
+    opacity: 0.72;
+  }
+  .hub-core {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+  }
+  .hub-mark {
+    width: 30px;
+    height: 34px;
+  }
+  .hub-mark i {
+    width: 9px;
+    height: 14px;
+  }
+  .hub-beam {
+    width: min(160px, 48vw);
+    height: 48%;
+    top: 50%;
+  }
   .vm-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
