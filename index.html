@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0c1613" />
     <title>Shomer — X Layer Ship Gate · deployment policy verification</title>
     <meta
       name="description"
-      content="Shomer is the X Layer Ship Gate: agents and founders verify live deployments against the policy you approved. Free verify · Paid Deep Verification. Not an audit. Never safe."
+      content="Verify before you ship or trust. Shomer compares live X Layer deployments with the policy you approved and returns Blocked, Review Required, or Policy Matched with pinned evidence."
     />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -53,14 +53,11 @@
       <!-- 1. Hero theater: hub + check rays -->
       <div class="landing-hero hub-hero">
         <div class="hero-copy">
-          <p class="landing-pill"><i></i> X Layer Ship Gate · OKX.AI ASP #6117 · A2MCP</p>
+          <p class="landing-pill"><i></i> X Layer Ship Gate · OKX.AI ASP #6117</p>
           <h1>Is this the deployment<br /><em>you approved?</em></h1>
           <p class="landing-lead">
-            Agents call Shomer <strong>before they ship or trust</strong> a deployment.
-            Live X Layer state vs the policy you approved—owner, Safe, upgrade, timelock, implementation—
-            returns <strong>Blocked</strong>, <strong>Review Required</strong>, or <strong>Policy Matched</strong>.
-            Never “safe.” Never “audited.”
-            <strong>Free</strong> verify for agents; <strong>Paid Deep Verification</strong> for privilege maps, artifact match, and auditor briefs.
+            Agents call Shomer before they ship or trust a deployment. It compares live X Layer state
+            with the policy you approved: owner, Safe, upgrade authority, timelock, and implementation.
           </p>
           <div class="landing-ctas">
             <button class="landing-primary" id="landingStartCheck" type="button">Verify a contract <b>→</b></button>
@@ -276,12 +273,12 @@
     </section>
     <div class="grain" aria-hidden="true"></div>
     <div class="app-shell" id="appShell">
-      <aside class="sidebar">
+      <aside class="sidebar" aria-label="Desktop navigation">
         <a class="brand" href="#top" aria-label="Shomer home">
           <span class="brand-mark"><span></span></span>
           <span>shomer</span>
         </a>
-        <nav>
+        <nav class="sidebar-nav" aria-label="Verification steps">
           <button class="nav-item active" data-panel="overview" type="button">
             <span class="nav-icon">1</span>Live
           </button>
@@ -296,18 +293,28 @@
           </button>
         </nav>
         <div class="sidebar-bottom">
-          <button class="network-pill" id="networkSwitch" type="button">
-            <i></i><span id="networkLabel">X Layer Mainnet</span> <span>⌄</span>
+          <button class="network-pill" data-network-switch type="button" aria-label="Switch X Layer network">
+            <i></i><span class="network-label">X Layer Mainnet</span> <span class="network-chevron">⌄</span>
           </button>
         </div>
       </aside>
 
       <main id="top">
         <header class="topbar">
-          <div class="crumb">
-            <strong id="projectCrumb">New verification</strong>
+          <div class="topbar-start">
+            <a class="mobile-brand" href="#top" aria-label="Shomer home">
+              <span class="brand-mark tiny"><span></span></span>
+              <span>shomer</span>
+            </a>
+            <div class="crumb">
+              <strong id="projectCrumb">New verification</strong>
+              <span class="topbar-step" id="topbarStep" aria-live="polite">Live</span>
+            </div>
           </div>
           <div class="top-actions">
+            <button class="network-pill topbar-network" data-network-switch type="button" aria-label="Switch X Layer network">
+              <i></i><span class="network-label">Mainnet</span>
+            </button>
             <button class="button ghost small" id="newScanBtn" type="button">Reset</button>
           </div>
         </header>
@@ -685,6 +692,25 @@
           </div>
         </section>
       </main>
+
+      <nav class="mobile-bottom-nav" aria-label="Verification steps">
+        <button class="nav-item active" data-panel="overview" type="button">
+          <span class="nav-icon">1</span>
+          <span class="nav-label">Live</span>
+        </button>
+        <button class="nav-item" data-panel="manifest" type="button">
+          <span class="nav-icon">2</span>
+          <span class="nav-label">Rules</span>
+        </button>
+        <button class="nav-item" data-panel="scans" type="button">
+          <span class="nav-icon">3</span>
+          <span class="nav-label">Results</span>
+        </button>
+        <button class="nav-item" data-panel="reports" type="button">
+          <span class="nav-icon">4</span>
+          <span class="nav-label">Brief</span>
+        </button>
+      </nav>
     </div>
 
     <div class="modal-backdrop" id="modalBackdrop"></div>

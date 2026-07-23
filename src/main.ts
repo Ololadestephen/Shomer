@@ -95,14 +95,27 @@ function toast(text: string) {
   setTimeout(() => el.classList.remove('show'), 2800);
 }
 
+const PANEL_TITLES: Record<string, string> = {
+  overview: 'Live',
+  manifest: 'Your rules',
+  scans: 'Results',
+  reports: 'Brief',
+};
+
 function showPanel(id: string) {
   document.querySelectorAll('.panel').forEach((p) => {
     p.classList.toggle('is-visible', p.id === id);
   });
   document.querySelectorAll('.nav-item').forEach((n) => {
     const btn = n as HTMLElement;
-    btn.classList.toggle('active', btn.dataset.panel === id);
+    const on = btn.dataset.panel === id;
+    btn.classList.toggle('active', on);
+    if (on) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
   });
+  const step = document.getElementById('topbarStep');
+  if (step) step.textContent = PANEL_TITLES[id] ?? id;
+  document.getElementById('appShell')?.setAttribute('data-active-panel', id);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -574,8 +587,12 @@ function updateNetworkLabel() {
     (($('#fieldNetwork') as HTMLSelectElement)?.value as
       | 'mainnet'
       | 'testnet') || policy.draft.network;
-  const label = $('#networkLabel');
-  if (label) label.textContent = networkLabel(net);
+  const full = networkLabel(net);
+  const short = net === 'testnet' ? 'Testnet' : 'Mainnet';
+  document.querySelectorAll('.network-label').forEach((el) => {
+    const node = el as HTMLElement;
+    node.textContent = node.closest('.topbar-network') ? short : full;
+  });
 }
 
 // —— Render ——
@@ -1735,12 +1752,14 @@ function bindEvents() {
   });
 
   $('#fieldNetwork')?.addEventListener('change', updateNetworkLabel);
-  $('#networkSwitch')?.addEventListener('click', () => {
-    const sel = $('#fieldNetwork') as HTMLSelectElement | null;
-    if (!sel) return;
-    sel.value = sel.value === 'mainnet' ? 'testnet' : 'mainnet';
-    updateNetworkLabel();
-    toast(`Network set to ${networkLabel(sel.value as 'mainnet' | 'testnet')}`);
+  document.querySelectorAll('[data-network-switch]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const sel = $('#fieldNetwork') as HTMLSelectElement | null;
+      if (!sel) return;
+      sel.value = sel.value === 'mainnet' ? 'testnet' : 'mainnet';
+      updateNetworkLabel();
+      toast(`Network set to ${networkLabel(sel.value as 'mainnet' | 'testnet')}`);
+    });
   });
 
   $('#newScanBtn')?.addEventListener('click', () => {
