@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ivory: #f5f6f0;
+        --moss: #14281d;
+        --moss-2: #294534;
+        --lime: #c8e562;
+        --terminal: #0c1613;
+        --terminal-2: #12221b;
+        --muted: #5f6f66;
+        --line: #ccd3c8;
+        --danger: #d9685a;
+        --warning: #dca84e;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #edf0e8;
+        color: var(--moss);
+        font-family: "Montserrat", sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      .scene-fill {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 86% 4%, rgba(200,229,98,.18), transparent 28%),
+          var(--ivory);
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        opacity: .16;
+        background-image:
+          repeating-linear-gradient(0deg, transparent 0 5px, rgba(20,40,29,.025) 5px 6px),
+          repeating-linear-gradient(90deg, transparent 0 8px, rgba(20,40,29,.018) 8px 9px);
+      }
+      .arch {
+        position: absolute;
+        width: 690px;
+        height: 690px;
+        right: -310px;
+        top: -275px;
+        border: 96px solid rgba(20,40,29,.055);
+        border-radius: 50%;
+      }
+      .rule-v {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 107px;
+        width: 2px;
+        background: rgba(20,40,29,.12);
+      }
+      .rule-h {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 90px;
+        height: 2px;
+        background: rgba(20,40,29,.10);
+      }
+      .frame-id {
+        position: absolute;
+        top: 43px;
+        left: 128px;
+        font: 700 18px/1 "JetBrains Mono", monospace;
+        letter-spacing: .16em;
+        color: var(--moss-2);
+      }
+      .brand {
+        position: absolute;
+        top: 37px;
+        right: 116px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .shield {
+        width: 28px;
+        height: 32px;
+        display: inline-grid;
+        place-items: center;
+        color: var(--terminal);
+        background: var(--lime);
+        clip-path: polygon(50% 0, 94% 16%, 87% 70%, 50% 100%, 13% 70%, 6% 16%);
+        font: 900 14px/1 "Montserrat", sans-serif;
+      }
+      .content {
+        position: absolute;
+        inset: 118px 112px 76px 128px;
+        display: grid;
+        grid-template-columns: 42% 58%;
+        gap: 64px;
+        align-items: center;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 30px;
+        font: 700 18px/1.2 "JetBrains Mono", monospace;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--moss-2);
+      }
+      .eyebrow::before {
+        content: "";
+        display: block;
+        width: 54px;
+        height: 5px;
+        background: var(--lime);
+      }
+      h1, h2, p { margin: 0; }
+      .headline {
+        max-width: 720px;
+        font-size: 82px;
+        line-height: .98;
+        letter-spacing: -.055em;
+        font-weight: 900;
+      }
+      .headline.compact { font-size: 70px; line-height: 1.02; }
+      .headline .match { color: #55701e; }
+      .headline .block { color: var(--danger); }
+      .headline .review { color: #a66d10; }
+      .subcopy {
+        max-width: 620px;
+        margin-top: 28px;
+        font-size: 28px;
+        line-height: 1.42;
+        color: #4d6256;
+      }
+      .micro {
+        margin-top: 34px;
+        font: 700 18px/1.4 "JetBrains Mono", monospace;
+        color: var(--muted);
+      }
+      .terminal-wrap {
+        position: relative;
+        width: 100%;
+        height: 720px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .terminal {
+        position: relative;
+        width: 930px;
+        height: 650px;
+        overflow: hidden;
+        border: 2px solid #2b4036;
+        border-radius: 28px;
+        background: var(--terminal);
+        color: #e5eadf;
+        box-shadow: 0 36px 90px rgba(17,35,26,.23), 0 8px 24px rgba(17,35,26,.14);
+        transform-origin: center center;
+      }
+      .terminal-top {
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        border-bottom: 2px solid #22362d;
+        background: #0e1b17;
+      }
+      .dots { display: flex; gap: 11px; }
+      .dot { width: 13px; height: 13px; border-radius: 50%; background: #415047; }
+      .terminal-title {
+        font: 700 17px/1 "JetBrains Mono", monospace;
+        color: #9eaaa3;
+      }
+      .terminal-body {
+        padding: 42px 42px;
+        font: 400 22px/1.7 "JetBrains Mono", monospace;
+      }
+      .term-line {
+        display: flex;
+        min-height: 38px;
+        align-items: baseline;
+        white-space: nowrap;
+      }
+      .ln { width: 42px; flex: 0 0 42px; color: #819188; }
+      .key { color: #93a89b; }
+      .value { color: #f0f3eb; }
+      .good { color: var(--lime); font-weight: 700; }
+      .bad { color: #f18475; font-weight: 700; }
+      .warn { color: #efbd64; font-weight: 700; }
+      .dim { color: #87978e; }
+      .prompt { color: var(--lime); }
+      .term-rule { height: 2px; background: #22362d; margin: 14px 0 18px 42px; width: 790px; }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        padding: 10px 16px;
+        border-radius: 100px;
+        font-weight: 700;
+        letter-spacing: .04em;
+      }
+      .status-pill.good { background: rgba(200,229,98,.12); }
+      .status-pill.bad { background: rgba(217,104,90,.12); }
+      .status-pill.warn { background: rgba(220,168,78,.12); }
+      .focus-row {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        height: 50px;
+        border: 2px solid rgba(200,229,98,.55);
+        border-radius: 11px;
+        background: rgba(200,229,98,.05);
+        opacity: 0;
+      }
+      .focus-red { border-color: rgba(217,104,90,.68); background: rgba(217,104,90,.07); }
+      .focus-amber { border-color: rgba(220,168,78,.75); background: rgba(220,168,78,.07); }
+      .cursor {
+        position: absolute;
+        z-index: 20;
+        width: 34px;
+        height: 44px;
+        filter: drop-shadow(0 4px 5px rgba(0,0,0,.30));
+        transform-origin: 3px 3px;
+      }
+      .cursor::before {
+        content: "";
+        position: absolute;
+        left: -13px;
+        top: -13px;
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--lime);
+        border-radius: 50%;
+        opacity: 0;
+      }
+      .cursor svg { display: block; width: 34px; height: 44px; }
+      .proof-tag {
+        position: absolute;
+        right: 38px;
+        bottom: 29px;
+        padding: 9px 13px;
+        border: 2px solid #2d4439;
+        border-radius: 8px;
+        font: 700 13px/1 "JetBrains Mono", monospace;
+        letter-spacing: .08em;
+        color: #b5c2ba;
+      }
+      .number {
+        position: absolute;
+        left: 112px;
+        bottom: 40px;
+        font: 700 16px/1 "JetBrains Mono", monospace;
+        color: #5f6d65;
+      }
+      .badge {
+        display: inline-flex;
+        margin-top: 35px;
+        padding: 14px 20px;
+        border: 2px solid var(--line);
+        border-radius: 100px;
+        font: 700 17px/1 "JetBrains Mono", monospace;
+        letter-spacing: .03em;
+        background: rgba(255,255,255,.45);
+      }
+      .badge b { color: #50651d; margin-right: 9px; }
+      .services {
+        position: absolute;
+        inset: 160px 160px 110px 160px;
+        display: grid;
+        grid-template-columns: 39% 61%;
+        gap: 90px;
+        align-items: center;
+      }
+      .service-stack { display: grid; gap: 22px; }
+      .service-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        min-height: 245px;
+        padding: 44px 48px;
+        border: 3px solid var(--moss);
+        border-radius: 20px;
+        background: rgba(255,255,255,.68);
+        box-shadow: 0 18px 44px rgba(20,40,29,.10);
+      }
+      .service-card.paid {
+        background: var(--moss);
+        color: var(--ivory);
+      }
+      .service-card h3 { margin: 0 0 15px; font-size: 40px; letter-spacing: -.035em; }
+      .service-card p { font-size: 21px; line-height: 1.45; color: #5e7066; }
+      .service-card.paid p { color: #b8c2bb; }
+      .price {
+        display: grid;
+        place-items: center;
+        width: 118px;
+        height: 118px;
+        border-radius: 50%;
+        background: var(--lime);
+        color: var(--terminal);
+        font: 900 23px/1.1 "Montserrat", sans-serif;
+        text-align: center;
+      }
+      .report-layout {
+        position: absolute;
+        inset: 126px 96px 58px 110px;
+        display: grid;
+        grid-template-columns: 34% 66%;
+        gap: 48px;
+        align-items: center;
+      }
+      .report-terminal {
+        position: relative;
+        width: 1080px;
+        height: 790px;
+        border-radius: 26px;
+        background: var(--terminal);
+        color: #e6ece5;
+        border: 2px solid #2b4036;
+        overflow: hidden;
+        box-shadow: 0 36px 90px rgba(17,35,26,.22);
+        transform-origin: 78% 57%;
+      }
+      .report-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        padding: 26px 28px;
+      }
+      .report-box {
+        min-height: 150px;
+        border: 2px solid #253b31;
+        border-radius: 16px;
+        padding: 20px 22px;
+        background: var(--terminal-2);
+      }
+      .report-box h4 {
+        margin: 0 0 13px;
+        font: 700 15px/1 "JetBrains Mono", monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #7f9188;
+      }
+      .report-box p {
+        font: 700 22px/1.45 "JetBrains Mono", monospace;
+      }
+      .report-box.wide { grid-column: 1 / -1; min-height: 205px; }
+      .role-row {
+        display: grid;
+        grid-template-columns: 150px 1fr 100px;
+        gap: 14px;
+        padding: 9px 0;
+        border-bottom: 1px solid #2a3d34;
+        font: 400 17px/1.25 "JetBrains Mono", monospace;
+      }
+      .role-row:last-child { border-bottom: 0; }
+      .report-focus {
+        position: absolute;
+        border: 3px solid var(--lime);
+        border-radius: 18px;
+        opacity: 0;
+        box-shadow: 0 0 0 7px rgba(200,229,98,.08);
+      }
+      .recover-layout {
+        position: absolute;
+        inset: 140px 140px 90px;
+        display: grid;
+        grid-template-columns: 38% 62%;
+        gap: 80px;
+        align-items: center;
+      }
+      .receipt {
+        padding: 54px;
+        border-radius: 28px;
+        background: var(--terminal);
+        color: var(--ivory);
+        box-shadow: 0 32px 80px rgba(17,35,26,.22);
+      }
+      .receipt-row {
+        display: grid;
+        grid-template-columns: 42% 58%;
+        padding: 24px 0;
+        border-bottom: 2px solid #263a31;
+        font: 700 22px/1.25 "JetBrains Mono", monospace;
+      }
+      .receipt-row:last-child { border-bottom: 0; }
+      .receipt-row span:first-child { color: #819188; }
+      .listing {
+        position: absolute;
+        inset: 150px 170px 100px;
+        display: grid;
+        grid-template-columns: 40% 60%;
+        gap: 70px;
+        align-items: center;
+      }
+      .listing-card {
+        min-height: 610px;
+        padding: 0;
+        border: 3px solid var(--moss);
+        border-radius: 26px;
+        background: rgba(255,255,255,.9);
+        box-shadow: 0 28px 70px rgba(20,40,29,.13);
+        overflow: hidden;
+      }
+      .listing-chrome {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        background: #e8ece4;
+        border-bottom: 2px solid var(--line);
+      }
+      .listing-chrome .url-bar {
+        flex: 1;
+        min-width: 0;
+        padding: 12px 16px;
+        border-radius: 10px;
+        background: #fff;
+        border: 2px solid #d5dcd2;
+        font: 700 18px/1.2 "JetBrains Mono", monospace;
+        color: var(--moss);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .listing-body { padding: 40px 48px 46px; }
+      .listing-head { display: flex; align-items: center; justify-content: space-between; }
+      .listing-logo {
+        width: 88px; height: 88px; display: grid; place-items: center;
+        border-radius: 20px; background: var(--moss);
+      }
+      .listing-logo .shield { width: 44px; height: 52px; font-size: 20px; }
+      .live-pill {
+        padding: 13px 18px;
+        border-radius: 100px;
+        background: rgba(200,229,98,.38);
+        font: 700 17px/1 "JetBrains Mono", monospace;
+      }
+      .listing-card h2 { margin: 28px 0 0; font-size: 58px; letter-spacing: -.045em; }
+      .listing-card .listing-body > p { margin-top: 16px; font-size: 24px; line-height: 1.45; color: #4f6257; }
+      .listing-services { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
+      .listing-services span {
+        padding: 12px 15px; border: 2px solid var(--line); border-radius: 9px;
+        font: 700 15px/1 "JetBrains Mono", monospace;
+      }
+      .listing-note {
+        margin-top: 22px;
+        font: 700 15px/1.35 "JetBrains Mono", monospace;
+        color: #3f5248;
+        letter-spacing: .02em;
+      }
+      .end {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+      .end-inner { width: 1500px; }
+      .end h1 { font-size: 88px; line-height: 1.02; letter-spacing: -.055em; }
+      .end p {
+        margin-top: 28px;
+        font: 700 32px/1.2 "JetBrains Mono", monospace;
+        color: var(--moss);
+      }
+      .end .end-url {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 14px 22px;
+        border-radius: 12px;
+        background: rgba(200,229,98,.28);
+        border: 2px solid rgba(200,229,98,.55);
+        font: 700 28px/1 "JetBrains Mono", monospace;
+        color: var(--terminal);
+        letter-spacing: .02em;
+      }
+      .end .end-asp {
+        margin-top: 18px;
+        font: 700 20px/1 "JetBrains Mono", monospace;
+        color: #6a7a70;
+        letter-spacing: .08em;
+      }
+      .end-mark { margin: 0 auto 32px; width: 64px; height: 74px; font-size: 28px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="70" data-width="1920" data-height="1080">
+
+      <section id="scene-handoff" class="clip scene" data-start="0" data-duration="4" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">SHOMER / EVIDENCE 01</div>
+        <div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="content">
+          <div id="handoff-copy">
+            <div class="eyebrow">Deployment policy verification</div>
+            <h1 class="headline">Three outcomes.<br>No invented pass.</h1>
+            <p class="subcopy">The same evidence engine. Three honest verdicts.</p>
+          </div>
+          <div class="terminal-wrap">
+            <div id="handoff-terminal" class="terminal">
+              <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">POST /api/agent/verify</span></div>
+              <div class="terminal-body">
+                <div class="term-line"><span class="ln">01</span><span class="prompt">→</span>&nbsp; compare approved policy</div>
+                <div class="term-line"><span class="ln">02</span><span class="dim">→</span>&nbsp; read deployment evidence</div>
+                <div class="term-line"><span class="ln">03</span><span class="dim">→</span>&nbsp; pin observed block</div>
+                <div class="term-rule"></div>
+                <div class="term-line"><span class="ln">04</span><span class="good">POLICY MATCHED</span></div>
+                <div class="term-line"><span class="ln">05</span><span class="bad">BLOCKED</span></div>
+                <div class="term-line"><span class="ln">06</span><span class="warn">REVIEW REQUIRED</span></div>
+              </div>
+              <div class="proof-tag">EVIDENCE, NOT AN AUDIT</div>
+            </div>
+            <div id="cursor-handoff" class="cursor" style="left:730px;top:445px">
+              <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 18—22S</div>
+      </section>
+
+      <section id="scene-matched" class="clip scene" data-start="4" data-duration="10" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">OUTCOME 01 / 03</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="content">
+          <div id="matched-copy">
+            <div class="eyebrow">Approved policy matched</div>
+            <h1 class="headline"><span class="match">Policy<br>Matched</span></h1>
+            <p class="subcopy">Declared owner and observed owner resolve to the same address.</p>
+            <div class="badge"><b>PINNED</b> block 12345</div>
+            <div class="micro">DETERMINISTIC FIXTURE REPLAY</div>
+          </div>
+          <div class="terminal-wrap">
+            <div id="matched-terminal" class="terminal">
+              <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">shomer · Shomer Verify / result.json</span></div>
+              <div class="terminal-body">
+                <div class="term-line"><span class="ln">01</span><span class="key">network</span>&nbsp;&nbsp;&nbsp;&nbsp; <span class="value">eip155:196</span></div>
+                <div class="term-line"><span class="ln">02</span><span class="key">block</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="value">12345</span></div>
+                <div class="term-line"><span class="ln">03</span><span class="key">expected</span>&nbsp;&nbsp;&nbsp; <span class="good">0x4dff…0bf8</span></div>
+                <div class="term-line"><span class="ln">04</span><span class="key">observed</span>&nbsp;&nbsp;&nbsp; <span class="good">0x4dff…0bf8</span></div>
+                <div class="term-rule"></div>
+                <div class="term-line"><span class="ln">05</span><span class="status-pill good">✓ POLICY MATCHED</span></div>
+                <div class="term-line"><span class="ln">06</span><span class="dim">hard violations: 0</span></div>
+              </div>
+              <div id="matched-focus" class="focus-row" style="top:199px"></div>
+              <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
+            </div>
+            <div id="cursor-matched" class="cursor" style="left:750px;top:285px"><svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg></div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 22—32S</div>
+      </section>
+
+      <section id="scene-blocked" class="clip scene" data-start="14" data-duration="11" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">OUTCOME 02 / 03</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="content">
+          <div id="blocked-copy">
+            <div class="eyebrow">Hard policy violation</div>
+            <h1 class="headline"><span class="block">Blocked</span></h1>
+            <p class="subcopy">The deployment owner differs from the authority the team approved.</p>
+            <div class="badge"><b>PINNED</b> block 12345</div>
+            <div class="micro">DETERMINISTIC FIXTURE REPLAY</div>
+          </div>
+          <div class="terminal-wrap">
+            <div id="blocked-terminal" class="terminal">
+              <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">shomer · Shomer Verify / result.json</span></div>
+              <div class="terminal-body">
+                <div class="term-line"><span class="ln">01</span><span class="key">policy.owner</span>&nbsp;&nbsp; <span class="value">0x1111…1111</span></div>
+                <div class="term-line"><span class="ln">02</span><span class="key">chain.owner</span>&nbsp;&nbsp;&nbsp; <span class="bad">0x4dff…0bf8</span></div>
+                <div class="term-line"><span class="ln">03</span><span class="key">check</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="bad">OWNER_MISMATCH</span></div>
+                <div class="term-rule"></div>
+                <div class="term-line"><span class="ln">04</span><span class="status-pill bad">× BLOCKED</span></div>
+                <div class="term-line"><span class="ln">05</span><span class="dim">shipGate.allowed: false</span></div>
+                <div class="term-line"><span class="ln">06</span><span class="dim">remediation: transfer ownership</span></div>
+              </div>
+              <div id="blocked-focus-a" class="focus-row focus-red" style="top:117px"></div>
+              <div id="blocked-focus-b" class="focus-row focus-red" style="top:155px"></div>
+              <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
+            </div>
+            <div id="cursor-blocked" class="cursor" style="left:600px;top:230px"><svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg></div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 32—43S</div>
+      </section>
+
+      <section id="scene-review" class="clip scene" data-start="25" data-duration="10" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">OUTCOME 03 / 03</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="content">
+          <div id="review-copy">
+            <div class="eyebrow">Important undeclared privilege</div>
+            <h1 class="headline compact"><span class="review">Review<br>Required</span></h1>
+            <p class="subcopy">A privileged pauser exists, but the approved policy never declared it.</p>
+            <div class="badge"><b>PINNED</b> block 12345</div>
+            <div class="micro">DETERMINISTIC FIXTURE REPLAY</div>
+          </div>
+          <div class="terminal-wrap">
+            <div id="review-terminal" class="terminal">
+              <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">shomer · Shomer Verify / result.json</span></div>
+              <div class="terminal-body">
+                <div class="term-line"><span class="ln">01</span><span class="key">declaredRoles</span>&nbsp; <span class="value">[OWNER]</span></div>
+                <div class="term-line"><span class="ln">02</span><span class="key">observedRole</span>&nbsp;&nbsp; <span class="warn">PAUSER_ROLE</span></div>
+                <div class="term-line"><span class="ln">03</span><span class="key">status</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="warn">UNDECLARED</span></div>
+                <div class="term-rule"></div>
+                <div class="term-line"><span class="ln">04</span><span class="status-pill warn">! REVIEW REQUIRED</span></div>
+                <div class="term-line"><span class="ln">05</span><span class="dim">shipGate.allowed: false</span></div>
+                <div class="term-line"><span class="ln">06</span><span class="dim">human decision needed</span></div>
+              </div>
+              <div id="review-focus" class="focus-row focus-amber" style="top:155px"></div>
+              <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
+            </div>
+            <div id="cursor-review" class="cursor" style="left:670px;top:270px"><svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg></div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 43—53S</div>
+      </section>
+
+      <section id="scene-services" class="clip scene" data-start="35" data-duration="5" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">TWO WAYS TO VERIFY</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="services">
+          <div id="services-copy">
+            <div class="eyebrow">OKX.AI services</div>
+            <h1 class="headline compact">Start free.<br>Go deeper<br>when needed.</h1>
+          </div>
+          <div class="service-stack">
+            <div id="service-free" class="service-card">
+              <div><h3>Shomer Verify</h3><p>Policy vs deployment state · free agent verification</p></div>
+              <div class="price">FREE</div>
+            </div>
+            <div id="service-paid" class="service-card paid">
+              <div><h3>Shomer Deep Verify</h3><p>Privilege map · artifact match · Auditor Brief</p></div>
+              <div class="price">0.05<br>USDT</div>
+            </div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 53—58S</div>
+      </section>
+
+      <section id="scene-paid" class="clip scene" data-start="40" data-duration="17" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">SHOMER DEEP VERIFY / PRODUCTION</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="report-layout">
+          <div id="paid-copy">
+            <div class="eyebrow">Sanitized production proof</div>
+            <h1 class="headline compact">Match the artifact.<br>Then test the policy.</h1>
+            <p class="subcopy">Reviewed bytecode matched. The deployment still failed policy.</p>
+            <div class="badge"><b>PINNED</b> block 65954437</div>
+            <div class="micro">SANITIZED PRODUCTION PROOF</div>
+          </div>
+          <div class="terminal-wrap">
+            <div id="paid-report" class="report-terminal">
+              <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">Auditor Brief / shomer-196-65954437-1ba7f41efd1f</span></div>
+              <div class="report-grid">
+                <div id="artifact-box" class="report-box">
+                  <h4>Runtime artifact</h4>
+                  <p class="good">✓ MATCHED</p>
+                  <p class="dim" style="font-size:15px;margin-top:9px">0x3b19…ee64</p>
+                </div>
+                <div class="report-box">
+                  <h4>Evidence pin</h4>
+                  <p>eip155:196</p>
+                  <p class="dim" style="font-size:15px;margin-top:9px">block 65954437</p>
+                </div>
+                <div class="report-box wide">
+                  <h4>Privilege map</h4>
+                  <div class="role-row"><span>OWNER</span><span id="paid-owner" class="bad">0x0000…0000</span><span class="bad">BLOCK</span></div>
+                  <div class="role-row"><span>UPGRADER</span><span>not detected</span><span class="good">OK</span></div>
+                  <div class="role-row"><span>PAUSER</span><span>not detected</span><span class="good">OK</span></div>
+                </div>
+                <div class="report-box">
+                  <h4>Auditor Brief</h4>
+                  <p class="good">GENERATED</p>
+                </div>
+                <div id="verdict-box" class="report-box">
+                  <h4>Launch verdict</h4>
+                  <p class="bad">× BLOCKED</p>
+                </div>
+              </div>
+              <div id="paid-focus-artifact" class="report-focus" style="left:26px;top:96px;width:503px;height:154px"></div>
+              <div id="paid-focus-owner" class="report-focus" style="left:26px;top:272px;width:1028px;height:71px;border-color:var(--danger)"></div>
+              <div id="paid-focus-verdict" class="report-focus" style="left:548px;top:509px;width:506px;height:154px;border-color:var(--danger)"></div>
+              <div class="proof-tag">SANITIZED PRODUCTION PROOF</div>
+            </div>
+            <div id="cursor-paid" class="cursor" style="left:580px;top:240px"><svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg></div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 58—75S</div>
+      </section>
+
+      <section id="scene-recovery" class="clip scene" data-start="57" data-duration="6" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">PAYMENT RECOVERY / X402</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="recover-layout">
+          <div id="recovery-copy">
+            <div class="eyebrow">Reliable paid delivery</div>
+            <h1 class="headline compact">Paid once.<br>Report recovered.</h1>
+            <p class="subcopy">A network timeout cannot hide a successful purchase or trigger another charge.</p>
+            <div class="micro">SANITIZED PRODUCTION PROOF</div>
+          </div>
+          <div id="receipt" class="receipt">
+            <div class="receipt-row"><span>payment</span><span class="good">SETTLED · 0.05 USDC</span></div>
+            <div class="receipt-row"><span>transaction</span><span>0x665b…f987</span></div>
+            <div class="receipt-row"><span>report</span><span class="good">RECOVERED</span></div>
+            <div class="receipt-row"><span>second charge</span><span class="good">NO</span></div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 75—81S</div>
+      </section>
+
+      <section id="scene-listing" class="clip scene" data-start="63" data-duration="4" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="frame-id">OKX.AI / ASP #6117</div><div class="brand"><span class="shield">S</span> Shomer</div>
+        <div class="listing">
+          <div id="listing-copy">
+            <div class="eyebrow">Approved and live</div>
+            <h1 class="headline compact">Built for agents.<br>Listed on OKX.AI.</h1>
+            <p class="subcopy">Free Shomer Verify and paid Shomer Deep Verify — ASP #6117.</p>
+          </div>
+          <div id="listing-card" class="listing-card">
+            <div class="listing-chrome">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+              <div class="url-bar">https://www.okx.ai/agents/6117</div>
+            </div>
+            <div class="listing-body">
+              <div class="listing-head"><div class="listing-logo"><span class="shield">S</span></div><div class="live-pill">● LIVE</div></div>
+              <h2>Shomer</h2>
+              <p>X Layer Ship Gate — deployment policy verification for founders and agents.</p>
+              <div class="listing-services"><span>Shomer Verify · free</span><span>Shomer Deep Verify · 0.05</span></div>
+              <div class="listing-note">LIVE LISTING CARD · open okx.ai/agents/6117</div>
+            </div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 81—85S</div>
+      </section>
+
+      <section id="scene-end" class="clip scene" data-start="67" data-duration="3" data-track-index="1">
+        <div class="scene-fill"></div><div class="grain"></div><div class="arch" data-layout-allow-overflow></div><div class="rule-v"></div><div class="rule-h"></div>
+        <div class="end">
+          <div id="end-inner" class="end-inner">
+            <span class="shield end-mark">S</span>
+            <h1>Verify the deployment<br>you intended to ship.</h1>
+            <div class="end-url">okx.ai/agents/6117</div>
+            <div class="end-asp">ASP #6117 · SHOMER VERIFY · DEEP VERIFY</div>
+          </div>
+        </div>
+        <div class="number">GLOBAL 85—88S</div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const enter = (selector, at, x = 0, y = 42, duration = .62) =>
+        tl.fromTo(selector, { opacity: 0, x, y }, { opacity: 1, x: 0, y: 0, duration, ease: "power3.out" }, at);
+      const click = (selector, at) => {
+        tl.to(selector, { scale: .88, duration: .12, ease: "power2.in" }, at)
+          .to(selector, { scale: 1, duration: .18, ease: "back.out(2)" }, at + .12)
+          .to(selector + "::before", { opacity: 1, duration: .1 }, at);
+      };
+
+      enter("#handoff-copy", .15, -62, 0, .72);
+      enter("#handoff-terminal", .34, 0, 80, .76);
+      tl.fromTo("#cursor-handoff", { opacity: 0, x: 120, y: 90 }, { opacity: 1, x: 0, y: 0, duration: .7, ease: "power3.out" }, 1.15);
+
+      enter("#matched-copy", 4.18, -55, 0, .68);
+      enter("#matched-terminal", 4.35, 60, 0, .72);
+      tl.fromTo("#matched-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .34, stagger: .12, ease: "power2.out" }, 4.8);
+      tl.fromTo("#cursor-matched", { opacity: 0, x: 110, y: 75 }, { opacity: 1, x: 0, y: 0, duration: .65, ease: "power3.out" }, 6.0);
+      tl.to("#cursor-matched", { x: -88, y: 12, duration: .72, ease: "power2.inOut" }, 7.0);
+      tl.to("#matched-focus", { opacity: 1, duration: .24 }, 7.7);
+      tl.to("#matched-terminal", { scale: 1.25, x: -34, duration: .72, ease: "power3.inOut" }, 8.05);
+      tl.to("#matched-focus", { opacity: .55, duration: .3 }, 12.7);
+
+      enter("#blocked-copy", 14.18, -55, 0, .68);
+      enter("#blocked-terminal", 14.35, 60, 0, .72);
+      tl.fromTo("#blocked-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .34, stagger: .12, ease: "power2.out" }, 14.8);
+      tl.fromTo("#cursor-blocked", { opacity: 0, x: 130, y: 80 }, { opacity: 1, x: 0, y: 0, duration: .62, ease: "power3.out" }, 16.0);
+      tl.to("#blocked-focus-a", { opacity: 1, duration: .22 }, 16.7);
+      tl.to("#cursor-blocked", { y: 38, duration: .55, ease: "power2.inOut" }, 18.0);
+      tl.to("#blocked-focus-b", { opacity: 1, duration: .22 }, 18.45);
+      tl.to("#blocked-terminal", { scale: 1.32, x: -44, duration: .76, ease: "power3.inOut" }, 19.0);
+
+      enter("#review-copy", 25.18, -55, 0, .68);
+      enter("#review-terminal", 25.35, 60, 0, .72);
+      tl.fromTo("#review-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .34, stagger: .12, ease: "power2.out" }, 25.8);
+      tl.fromTo("#cursor-review", { opacity: 0, x: 120, y: 70 }, { opacity: 1, x: 0, y: 0, duration: .62, ease: "power3.out" }, 27.0);
+      tl.to("#cursor-review", { x: -76, y: -10, duration: .66, ease: "power2.inOut" }, 28.0);
+      tl.to("#review-focus", { opacity: 1, duration: .24 }, 28.7);
+      tl.to("#review-terminal", { scale: 1.27, x: -38, duration: .74, ease: "power3.inOut" }, 29.1);
+
+      enter("#services-copy", 35.1, -52, 0, .62);
+      enter("#service-free", 35.35, 65, 0, .62);
+      enter("#service-paid", 35.7, 90, 0, .68);
+      tl.to("#service-paid .price", { scale: 1.08, duration: .38, ease: "back.out(2)" }, 37.0);
+
+      enter("#paid-copy", 40.1, -52, 0, .7);
+      enter("#paid-report", 40.32, 70, 0, .72);
+      tl.fromTo("#paid-report .report-box", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .42, stagger: .13, ease: "power3.out" }, 41.0);
+      tl.fromTo("#cursor-paid", { opacity: 0, x: 150, y: 90 }, { opacity: 1, x: 0, y: 0, duration: .7, ease: "power3.out" }, 43.0);
+      tl.to("#cursor-paid", { x: -205, y: -92, duration: .78, ease: "power2.inOut" }, 44.0);
+      tl.to("#paid-focus-artifact", { opacity: 1, duration: .24 }, 44.75);
+      tl.to("#paid-report", { scale: 1.18, x: -65, y: 18, duration: .74, ease: "power3.inOut" }, 45.1);
+      tl.to("#paid-focus-artifact", { opacity: .25, duration: .3 }, 48.2);
+      tl.to("#cursor-paid", { x: -15, y: 105, duration: .8, ease: "power2.inOut" }, 48.45);
+      tl.to("#paid-focus-owner", { opacity: 1, duration: .24 }, 49.2);
+      tl.to("#paid-copy", { opacity: 0, x: -28, duration: .42, ease: "power2.in" }, 49.2);
+      tl.to("#scene-paid > .frame-id, #scene-paid > .brand", { opacity: 0, duration: .32, ease: "power2.in" }, 49.2);
+      tl.to("#paid-report", { scale: 1.30, x: -142, y: -25, duration: .78, ease: "power3.inOut" }, 49.45);
+      tl.to("#cursor-paid", { x: 125, y: 350, duration: .8, ease: "power2.inOut" }, 52.2);
+      tl.to("#paid-focus-verdict", { opacity: 1, duration: .24 }, 53.0);
+
+      enter("#recovery-copy", 57.1, -55, 0, .66);
+      enter("#receipt", 57.3, 68, 0, .7);
+      tl.fromTo("#receipt .receipt-row", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: .38, stagger: .28, ease: "power2.out" }, 58.0);
+
+      enter("#listing-copy", 63.08, -50, 0, .58);
+      enter("#listing-card", 63.22, 60, 0, .65);
+      tl.to("#listing-card", { scale: 1.04, duration: .7, ease: "power2.inOut" }, 65.15);
+
+      // End card: quick in, hold long enough to read URL (global 85–88s)
+      tl.fromTo("#end-inner", { opacity: 0, y: 18, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: .45, ease: "power3.out" }, 67.05);
+      tl.to("#end-inner", { scale: 1.02, duration: 1.6, ease: "sine.inOut" }, 67.55);
+      tl.to("#end-inner .end-url", { backgroundColor: "rgba(200,229,98,.42)", duration: .35, ease: "power2.out" }, 68.1);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -17,5 +17,8 @@ Screenshot*.jpg
 # Demo intermediates / large work files (keep final cuts if small enough; ignore workdir)
 docs/demo/hyper_work/
 docs/demo/*.mp4
+video/shomer-evidence/renders/
+video/shomer-evidence/.hyperframes/
 docs/demo/**/*.mp4
 # The sanitized docs/demo/bundle snapshot is intentionally tracked for recording.
+video/shomer-evidence/node_modules/
