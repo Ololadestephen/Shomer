@@ -2336,3 +2336,20 @@
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+
+/* App brand → back to landing */
+.brand,
+.mobile-brand {
+  cursor: pointer;
+}
+.brand:hover,
+.mobile-brand:hover {
+  opacity: 0.92;
+}
+.brand:focus-visible,
+.mobile-brand:focus-visible {
+  outline: 2px solid #c8e562;
+  outline-offset: 3px;
+  border-radius: 8px;
+}

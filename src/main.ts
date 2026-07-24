@@ -1591,9 +1591,26 @@ function bindEvents() {
       ($('#fieldContract') as HTMLInputElement | null)?.focus();
     }, 420);
   };
+
+  const showLanding = (e?: Event) => {
+    e?.preventDefault();
+    const landing = document.getElementById('landing');
+    const app = document.getElementById('appShell');
+    app?.classList.remove('app-visible');
+    landing?.removeAttribute('hidden');
+    landing?.classList.remove('leaving');
+    // Jump to top of marketing page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Focus brand for a11y after returning
+    (document.querySelector('.landing-brand') as HTMLElement | null)?.focus?.();
+  };
+
   $('#landingVerify')?.addEventListener('click', enterApp);
   $('#landingOpenAppClose')?.addEventListener('click', enterApp);
   $('#landingStartCheck')?.addEventListener('click', scrollToVerifyForm);
+  document.querySelectorAll('[data-go-landing]').forEach((el) => {
+    el.addEventListener('click', showLanding);
+  });
 
   const runSampleFromLanding = () => {
     const landingNet = document.getElementById('landingNetwork') as HTMLSelectElement | null;
