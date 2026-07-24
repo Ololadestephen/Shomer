@@ -200,10 +200,12 @@
         font: 400 22px/1.7 "JetBrains Mono", monospace;
       }
       .term-line {
+        position: relative;
         display: flex;
-        min-height: 38px;
-        align-items: baseline;
+        min-height: 42px;
+        align-items: center;
         white-space: nowrap;
+        z-index: 1;
       }
       .ln { width: 42px; flex: 0 0 42px; color: #819188; }
       .key { color: #93a89b; }
@@ -226,21 +228,35 @@
       .status-pill.good { background: rgba(200,229,98,.12); }
       .status-pill.bad { background: rgba(217,104,90,.12); }
       .status-pill.warn { background: rgba(220,168,78,.12); }
-      .focus-row {
+      /* Focus outline sits on the real line — never free-floating absolute rows */
+      .line-focus {
         position: absolute;
-        left: 28px;
-        right: 28px;
-        height: 50px;
-        border: 2px solid rgba(200,229,98,.55);
-        border-radius: 11px;
-        background: rgba(200,229,98,.05);
+        left: -14px;
+        right: -14px;
+        top: -4px;
+        bottom: -4px;
+        border: 2.5px solid rgba(200,229,98,.72);
+        border-radius: 12px;
+        background: rgba(200,229,98,.08);
         opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        box-shadow: 0 0 0 1px rgba(200,229,98,.12);
       }
-      .focus-red { border-color: rgba(217,104,90,.68); background: rgba(217,104,90,.07); }
-      .focus-amber { border-color: rgba(220,168,78,.75); background: rgba(220,168,78,.07); }
+      .line-focus.red {
+        border-color: rgba(241,132,117,.85);
+        background: rgba(217,104,90,.1);
+        box-shadow: 0 0 0 1px rgba(217,104,90,.12);
+      }
+      .line-focus.amber {
+        border-color: rgba(239,189,100,.88);
+        background: rgba(220,168,78,.1);
+        box-shadow: 0 0 0 1px rgba(220,168,78,.12);
+      }
+      .term-line > :not(.line-focus) { position: relative; z-index: 1; }
       .cursor {
         position: absolute;
-        z-index: 30;
+        z-index: 40;
         width: 34px;
         height: 44px;
         filter: drop-shadow(0 5px 8px rgba(0,0,0,.38));
@@ -250,15 +266,15 @@
       }
       .cursor-ring {
         position: absolute;
-        left: -14px;
-        top: -14px;
-        width: 42px;
-        height: 42px;
-        border: 3px solid var(--lime);
+        left: -12px;
+        top: -12px;
+        width: 36px;
+        height: 36px;
+        border: 2.5px solid var(--lime);
         border-radius: 50%;
         opacity: 0;
         transform: scale(0.35);
-        box-shadow: 0 0 0 6px rgba(200, 229, 98, 0.12);
+        box-shadow: 0 0 0 4px rgba(200, 229, 98, 0.1);
         pointer-events: none;
       }
       .cursor svg { display: block; width: 34px; height: 44px; }
@@ -366,11 +382,20 @@
         padding: 26px 28px;
       }
       .report-box {
+        position: relative;
         min-height: 150px;
         border: 2px solid #253b31;
         border-radius: 16px;
         padding: 20px 22px;
         background: var(--terminal-2);
+      }
+      .report-box > :not(.report-focus) {
+        position: relative;
+        z-index: 1;
+      }
+      .role-row > :not(.line-focus) {
+        position: relative;
+        z-index: 1;
       }
       .report-box h4 {
         margin: 0 0 13px;
@@ -384,6 +409,7 @@
       }
       .report-box.wide { grid-column: 1 / -1; min-height: 205px; }
       .role-row {
+        position: relative;
         display: grid;
         grid-template-columns: 150px 1fr 100px;
         gap: 14px;
@@ -394,10 +420,24 @@
       .role-row:last-child { border-bottom: 0; }
       .report-focus {
         position: absolute;
-        border: 3px solid var(--lime);
-        border-radius: 18px;
+        inset: -6px;
+        border: 2.5px solid var(--lime);
+        border-radius: 16px;
         opacity: 0;
-        box-shadow: 0 0 0 7px rgba(200,229,98,.08);
+        pointer-events: none;
+        box-shadow: 0 0 0 4px rgba(200,229,98,.1);
+        z-index: 2;
+      }
+      .report-focus.red {
+        border-color: rgba(241,132,117,.9);
+        box-shadow: 0 0 0 4px rgba(217,104,90,.12);
+      }
+      /* Role-row focus hugs the owner line only */
+      .role-row .line-focus {
+        left: -10px;
+        right: -10px;
+        top: 2px;
+        bottom: 2px;
       }
       .recover-layout {
         position: absolute;
@@ -577,15 +617,17 @@
                 <div class="term-line"><span class="ln">03</span><span class="key">expected</span>&nbsp;&nbsp;&nbsp; <span class="good">0x4dff…0bf8</span></div>
                 <div class="term-line"><span class="ln">04</span><span class="key">observed</span>&nbsp;&nbsp;&nbsp; <span class="good">0x4dff…0bf8</span></div>
                 <div class="term-rule"></div>
-                <div class="term-line"><span class="ln">05</span><span class="status-pill good">✓ POLICY MATCHED</span></div>
+                <div class="term-line" id="matched-verdict-line">
+                  <span class="line-focus" id="matched-focus"></span>
+                  <span class="ln">05</span><span class="status-pill good">✓ POLICY MATCHED</span>
+                </div>
                 <div class="term-line"><span class="ln">06</span><span class="dim">hard violations: 0</span></div>
               </div>
-              <div id="matched-focus" class="focus-row" style="top:199px"></div>
               <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
-            </div>
-            <div id="cursor-matched" class="cursor" style="left:720px;top:300px">
-              <span class="cursor-ring" aria-hidden="true"></span>
-              <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              <div id="cursor-matched" class="cursor" style="left:520px;top:418px">
+                <span class="cursor-ring" aria-hidden="true"></span>
+                <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -607,21 +649,25 @@
             <div id="blocked-terminal" class="terminal">
               <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">shomer · Shomer Verify / result.json</span></div>
               <div class="terminal-body">
-                <div class="term-line"><span class="ln">01</span><span class="key">policy.owner</span>&nbsp;&nbsp; <span class="value">0x1111…1111</span></div>
-                <div class="term-line"><span class="ln">02</span><span class="key">chain.owner</span>&nbsp;&nbsp;&nbsp; <span class="bad">0x4dff…0bf8</span></div>
+                <div class="term-line" id="blocked-line-expected">
+                  <span class="line-focus red" id="blocked-focus-a"></span>
+                  <span class="ln">01</span><span class="key">policy.owner</span>&nbsp;&nbsp; <span class="value">0x1111…1111</span>
+                </div>
+                <div class="term-line" id="blocked-line-observed">
+                  <span class="line-focus red" id="blocked-focus-b"></span>
+                  <span class="ln">02</span><span class="key">chain.owner</span>&nbsp;&nbsp;&nbsp; <span class="bad">0x4dff…0bf8</span>
+                </div>
                 <div class="term-line"><span class="ln">03</span><span class="key">check</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="bad">OWNER_MISMATCH</span></div>
                 <div class="term-rule"></div>
                 <div class="term-line"><span class="ln">04</span><span class="status-pill bad">× BLOCKED</span></div>
                 <div class="term-line"><span class="ln">05</span><span class="dim">shipGate.allowed: false</span></div>
                 <div class="term-line"><span class="ln">06</span><span class="dim">remediation: transfer ownership</span></div>
               </div>
-              <div id="blocked-focus-a" class="focus-row focus-red" style="top:117px"></div>
-              <div id="blocked-focus-b" class="focus-row focus-red" style="top:155px"></div>
               <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
-            </div>
-            <div id="cursor-blocked" class="cursor" style="left:640px;top:220px">
-              <span class="cursor-ring" aria-hidden="true"></span>
-              <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              <div id="cursor-blocked" class="cursor" style="left:700px;top:128px">
+                <span class="cursor-ring" aria-hidden="true"></span>
+                <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -644,19 +690,21 @@
               <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">shomer · Shomer Verify / result.json</span></div>
               <div class="terminal-body">
                 <div class="term-line"><span class="ln">01</span><span class="key">declaredRoles</span>&nbsp; <span class="value">[OWNER]</span></div>
-                <div class="term-line"><span class="ln">02</span><span class="key">observedRole</span>&nbsp;&nbsp; <span class="warn">PAUSER_ROLE</span></div>
+                <div class="term-line" id="review-line-role">
+                  <span class="line-focus amber" id="review-focus"></span>
+                  <span class="ln">02</span><span class="key">observedRole</span>&nbsp;&nbsp; <span class="warn">PAUSER_ROLE</span>
+                </div>
                 <div class="term-line"><span class="ln">03</span><span class="key">status</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="warn">UNDECLARED</span></div>
                 <div class="term-rule"></div>
                 <div class="term-line"><span class="ln">04</span><span class="status-pill warn">! REVIEW REQUIRED</span></div>
                 <div class="term-line"><span class="ln">05</span><span class="dim">shipGate.allowed: false</span></div>
                 <div class="term-line"><span class="ln">06</span><span class="dim">human decision needed</span></div>
               </div>
-              <div id="review-focus" class="focus-row focus-amber" style="top:155px"></div>
               <div class="proof-tag">DETERMINISTIC FIXTURE REPLAY</div>
-            </div>
-            <div id="cursor-review" class="cursor" style="left:680px;top:250px">
-              <span class="cursor-ring" aria-hidden="true"></span>
-              <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              <div id="cursor-review" class="cursor" style="left:620px;top:170px">
+                <span class="cursor-ring" aria-hidden="true"></span>
+                <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -701,6 +749,7 @@
               <div class="terminal-top"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span class="terminal-title">Auditor Brief / shomer-196-65954437-1ba7f41efd1f</span></div>
               <div class="report-grid">
                 <div id="artifact-box" class="report-box">
+                  <span class="report-focus" id="paid-focus-artifact"></span>
                   <h4>Runtime artifact</h4>
                   <p class="good">✓ MATCHED</p>
                   <p class="dim" style="font-size:15px;margin-top:9px">0x3b19…ee64</p>
@@ -712,7 +761,10 @@
                 </div>
                 <div class="report-box wide">
                   <h4>Privilege map</h4>
-                  <div class="role-row"><span>OWNER</span><span id="paid-owner" class="bad">0x0000…0000</span><span class="bad">BLOCK</span></div>
+                  <div class="role-row" id="paid-owner-row">
+                    <span class="line-focus red" id="paid-focus-owner"></span>
+                    <span>OWNER</span><span id="paid-owner" class="bad">0x0000…0000</span><span class="bad">BLOCK</span>
+                  </div>
                   <div class="role-row"><span>UPGRADER</span><span>not detected</span><span class="good">OK</span></div>
                   <div class="role-row"><span>PAUSER</span><span>not detected</span><span class="good">OK</span></div>
                 </div>
@@ -721,18 +773,16 @@
                   <p class="good">GENERATED</p>
                 </div>
                 <div id="verdict-box" class="report-box">
+                  <span class="report-focus red" id="paid-focus-verdict"></span>
                   <h4>Launch verdict</h4>
                   <p class="bad">× BLOCKED</p>
                 </div>
               </div>
-              <div id="paid-focus-artifact" class="report-focus" style="left:26px;top:96px;width:503px;height:154px"></div>
-              <div id="paid-focus-owner" class="report-focus" style="left:26px;top:272px;width:1028px;height:71px;border-color:var(--danger)"></div>
-              <div id="paid-focus-verdict" class="report-focus" style="left:548px;top:509px;width:506px;height:154px;border-color:var(--danger)"></div>
               <div class="proof-tag">SANITIZED PRODUCTION PROOF</div>
-            </div>
-            <div id="cursor-paid" class="cursor" style="left:560px;top:220px">
-              <span class="cursor-ring" aria-hidden="true"></span>
-              <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              <div id="cursor-paid" class="cursor" style="left:420px;top:190px">
+                <span class="cursor-ring" aria-hidden="true"></span>
+                <svg viewBox="0 0 34 44"><path d="M3 2v31l8-8 7 16 8-4-8-15h12L3 2Z" fill="#F5F6F0" stroke="#14281D" stroke-width="2.5"/></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -877,11 +927,12 @@
         }, at);
       };
 
+      // Outline is a child of the line/box — only fade it in (no free-floating geometry)
       const showFocus = (selector, at) => {
         tl.fromTo(
           selector,
-          { opacity: 0, scaleX: 0.96 },
-          { opacity: 1, scaleX: 1, duration: 0.22, ease: "power2.out" },
+          { opacity: 0 },
+          { opacity: 1, duration: 0.2, ease: "power2.out" },
           at,
         );
       };
@@ -893,41 +944,41 @@
       moveCursor("#cursor-handoff", -40, -30, 1.95, 0.55);
       clickCursor("#cursor-handoff", 2.55);
 
-      // —— Policy Matched: move → click verdict → zoom → hold → ease out ——
+      // —— Policy Matched: cursor rests on verdict line inside the terminal ——
       enter("#matched-copy", 4.18, -55, 0, 0.68);
       enter("#matched-stage", 4.35, 60, 0, 0.72);
       tl.fromTo("#matched-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.1, ease: "power2.out" }, 4.85);
-      showCursor("#cursor-matched", 5.9, 110, 80);
-      moveCursor("#cursor-matched", -70, 55, 6.7, 0.65); // tip on POLICY MATCHED
+      showCursor("#cursor-matched", 5.95, 70, 50);
+      moveCursor("#cursor-matched", 8, 6, 6.75, 0.55); // tip on POLICY MATCHED
       clickCursor("#cursor-matched", 7.4);
-      showFocus("#matched-focus", 7.52);
-      zoomStage("#matched-stage", { scale: 1.22, x: -28, y: 12, origin: "62% 55%" }, 7.75, 0.7);
+      showFocus("#matched-focus", 7.48);
+      zoomStage("#matched-stage", { scale: 1.18, x: -20, y: 18, origin: "55% 62%" }, 7.75, 0.65);
       zoomReset("#matched-stage", 12.55, 0.55);
-      tl.to("#matched-focus", { opacity: 0.45, duration: 0.3 }, 12.55);
+      tl.to("#matched-focus", { opacity: 0.55, duration: 0.3 }, 12.55);
 
-      // —— Blocked: click expected, then observed, zoom mismatch ——
+      // —— Blocked: outline each owner line, cursor steps between them ——
       enter("#blocked-copy", 14.18, -55, 0, 0.68);
       enter("#blocked-stage", 14.35, 60, 0, 0.72);
       tl.fromTo("#blocked-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.1, ease: "power2.out" }, 14.85);
-      showCursor("#cursor-blocked", 15.9, 120, 85);
-      moveCursor("#cursor-blocked", -30, -8, 16.55, 0.55); // expected owner
-      clickCursor("#cursor-blocked", 17.15);
-      showFocus("#blocked-focus-a", 17.25);
-      moveCursor("#cursor-blocked", -20, 32, 17.9, 0.55); // observed owner
-      clickCursor("#cursor-blocked", 18.5);
-      showFocus("#blocked-focus-b", 18.6);
-      zoomStage("#blocked-stage", { scale: 1.26, x: -36, y: -8, origin: "60% 38%" }, 18.9, 0.72);
+      showCursor("#cursor-blocked", 15.95, 80, 45);
+      moveCursor("#cursor-blocked", 6, 4, 16.55, 0.5); // expected owner line
+      clickCursor("#cursor-blocked", 17.1);
+      showFocus("#blocked-focus-a", 17.18);
+      moveCursor("#cursor-blocked", 4, 46, 17.85, 0.5); // observed owner line (+1 row)
+      clickCursor("#cursor-blocked", 18.4);
+      showFocus("#blocked-focus-b", 18.48);
+      zoomStage("#blocked-stage", { scale: 1.2, x: -24, y: -6, origin: "55% 30%" }, 18.85, 0.65);
       zoomReset("#blocked-stage", 23.55, 0.55);
 
       // —— Review Required ——
       enter("#review-copy", 25.18, -55, 0, 0.68);
       enter("#review-stage", 25.35, 60, 0, 0.72);
       tl.fromTo("#review-terminal .term-line", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.1, ease: "power2.out" }, 25.85);
-      showCursor("#cursor-review", 26.9, 110, 75);
-      moveCursor("#cursor-review", -55, 5, 27.6, 0.62); // PAUSER_ROLE
-      clickCursor("#cursor-review", 28.3);
-      showFocus("#review-focus", 28.42);
-      zoomStage("#review-stage", { scale: 1.24, x: -30, y: 6, origin: "60% 42%" }, 28.7, 0.7);
+      showCursor("#cursor-review", 26.95, 75, 40);
+      moveCursor("#cursor-review", 10, 4, 27.6, 0.55); // PAUSER_ROLE line
+      clickCursor("#cursor-review", 28.2);
+      showFocus("#review-focus", 28.28);
+      zoomStage("#review-stage", { scale: 1.18, x: -22, y: 4, origin: "55% 32%" }, 28.55, 0.65);
       zoomReset("#review-stage", 33.55, 0.55);
 
       // —— Services ——
@@ -936,26 +987,26 @@
       enter("#service-paid", 35.7, 90, 0, 0.68);
       tl.to("#service-paid .price", { scale: 1.08, duration: 0.38, ease: "back.out(2)" }, 37.0);
 
-      // —— Paid production: artifact click → zoom → owner → verdict ——
+      // —— Paid production: artifact → owner row → verdict box ——
       enter("#paid-copy", 40.1, -52, 0, 0.7);
       enter("#paid-stage", 40.32, 70, 0, 0.72);
       tl.fromTo("#paid-report .report-box", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.12, ease: "power3.out" }, 41.0);
-      showCursor("#cursor-paid", 42.7, 130, 90);
-      moveCursor("#cursor-paid", -180, -70, 43.5, 0.68); // artifact MATCHED
-      clickCursor("#cursor-paid", 44.25);
-      showFocus("#paid-focus-artifact", 44.35);
-      zoomStage("#paid-stage", { scale: 1.14, x: -40, y: 10, origin: "35% 28%" }, 44.55, 0.65);
-      tl.to("#paid-focus-artifact", { opacity: 0.2, duration: 0.28 }, 47.5);
-      moveCursor("#cursor-paid", 30, 95, 47.7, 0.7); // zero owner
-      clickCursor("#cursor-paid", 48.45);
-      showFocus("#paid-focus-owner", 48.55);
-      tl.to("#paid-copy", { opacity: 0, x: -28, duration: 0.4, ease: "power2.in" }, 48.55);
-      tl.to("#scene-paid > .frame-id, #scene-paid > .brand", { opacity: 0, duration: 0.3, ease: "power2.in" }, 48.55);
-      zoomStage("#paid-stage", { scale: 1.22, x: -70, y: -20, origin: "55% 42%" }, 48.85, 0.7);
-      moveCursor("#cursor-paid", 170, 280, 51.6, 0.72); // launch BLOCKED
-      clickCursor("#cursor-paid", 52.4);
-      showFocus("#paid-focus-verdict", 52.5);
-      zoomStage("#paid-stage", { scale: 1.18, x: -50, y: -60, origin: "72% 72%" }, 52.75, 0.6);
+      showCursor("#cursor-paid", 42.8, 90, 60);
+      moveCursor("#cursor-paid", 12, 8, 43.55, 0.55); // artifact MATCHED
+      clickCursor("#cursor-paid", 44.15);
+      showFocus("#paid-focus-artifact", 44.22);
+      zoomStage("#paid-stage", { scale: 1.12, x: -28, y: 8, origin: "28% 22%" }, 44.5, 0.6);
+      tl.to("#paid-focus-artifact", { opacity: 0.35, duration: 0.25 }, 47.4);
+      moveCursor("#cursor-paid", 180, 150, 47.6, 0.65); // zero owner row
+      clickCursor("#cursor-paid", 48.35);
+      showFocus("#paid-focus-owner", 48.42);
+      tl.to("#paid-copy", { opacity: 0, x: -28, duration: 0.4, ease: "power2.in" }, 48.5);
+      tl.to("#scene-paid > .frame-id, #scene-paid > .brand", { opacity: 0, duration: 0.3, ease: "power2.in" }, 48.5);
+      zoomStage("#paid-stage", { scale: 1.16, x: -40, y: -12, origin: "50% 48%" }, 48.85, 0.65);
+      moveCursor("#cursor-paid", 280, 310, 51.5, 0.68); // launch BLOCKED
+      clickCursor("#cursor-paid", 52.25);
+      showFocus("#paid-focus-verdict", 52.32);
+      zoomStage("#paid-stage", { scale: 1.14, x: -20, y: -40, origin: "72% 78%" }, 52.6, 0.55);
       zoomReset("#paid-stage", 55.6, 0.55);
 
       // —— Recovery / listing / end ——
