@@ -19,8 +19,6 @@
   <a href="https://shomer-ui.pages.dev"><strong>Open Shomer</strong></a>
   &nbsp;·&nbsp;
   <a href="https://shomer-agent-api.mixed-mouse.workers.dev/api/agent"><strong>Inspect the agent API</strong></a>
-  &nbsp;·&nbsp;
-  <a href="docs/demo/bundle/DEMO-SHOTLIST.md"><strong>Run the 90-second demo</strong></a>
 </p>
 
 ---
@@ -75,27 +73,6 @@ Blank rules are **out of scope**, not green checks. Declared rules with missing 
 
 ---
 
-## See the product in 90 seconds
-
-The fastest judge/reviewer path is completely offline: no RPC variability, wallet, payment, or secrets.
-
-```bash
-npm install
-npm run demo:bundle
-```
-
-Then open [`docs/demo/bundle/DEMO-SHOTLIST.md`](./docs/demo/bundle/DEMO-SHOTLIST.md). The generated pack uses the same X Layer contract shape and pinned block for all three outcomes:
-
-| Scenario | Policy change | Expected result | Evidence |
-| --- | --- | --- | --- |
-| Correct approved owner | Owner equals observed owner | **Policy Matched** | [`matched.json`](./docs/demo/bundle/matched.json) |
-| Wrong approved owner | Owner intentionally differs | **Blocked** | [`blocked.json`](./docs/demo/bundle/blocked.json) |
-| Undeclared pauser | Owner matches, `PAUSER_ROLE` is undeclared | **Review Required** | [`review.json`](./docs/demo/bundle/review.json) |
-
-Each path includes a pinned-block Auditor Brief. The paid segment adds a privilege map and reviewed runtime-code comparison.
-
----
-
 ## Production proof, not a mock payment
 
 Shomer’s paid flow has settled on X Layer mainnet and recovered its report after the original client response was lost.
@@ -112,10 +89,6 @@ Shomer’s paid flow has settled on X Layer mainnet and recovered its report aft
 | Recovery | Persisted report returned without a second payment |
 
 This is an important product property: **matching reviewed bytecode does not override a deployment-policy blocker**.
-
-The public, sanitized proof — contract, payment transaction, recovered report, and verdict — is in [`payment-proof.sanitized.json`](./docs/demo/bundle/payment-proof.sanitized.json). It contains no payment authorization, receipt capability, API key, or wallet credential.
-
----
 
 ## Founder experience
 
@@ -294,7 +267,6 @@ CI runs without RPC, explorer, wallet, facilitator, or payment dependencies. Liv
 | [`server/paymentReceipts.ts`](./server/paymentReceipts.ts) | Idempotent report and transaction recovery |
 | [`workers/agent-api`](./workers/agent-api) | Production Worker and D1 migration |
 | [`scripts/demo-bundle.ts`](./scripts/demo-bundle.ts) | Secret-free recording evidence generator |
-| [`docs/demo/bundle`](./docs/demo/bundle) | Ready-to-record verdict and payment proofs |
 
 ---
 
@@ -325,7 +297,6 @@ Shomer is live on X Layer, listed on OKX.AI as **ASP #6117**, callable by other 
 - [`AGENT-SKILL.md`](./docs/AGENT-SKILL.md) — instructions for calling agents
 - [`ASP.md`](./docs/ASP.md) — deployment, discovery, and payment integration
 - [`TESTING.md`](./docs/TESTING.md) — deterministic, live-chain, and paid proof gates
-- [`DEMO-SHOTLIST.md`](./docs/demo/bundle/DEMO-SHOTLIST.md) — final 90-second recording and export guide
 
 ---
 
