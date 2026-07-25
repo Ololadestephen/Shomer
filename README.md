@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/shomer-asp-avatar-880.png" width="112" alt="Shomer shield" />
-</p>
-
 <h1 align="center">Shomer</h1>
 
 <p align="center">
@@ -168,7 +164,7 @@ The HTTP 402 metadata declares business parameters as JSON-body fields. Scalar a
 
 On success, Shomer returns a transaction hash, report ID, and capability-style recovery URL. The authorization header is never stored. Reusing one authorization for a different body returns a replay mismatch instead of another report.
 
-See [`docs/AGENT-SKILL.md`](./docs/AGENT-SKILL.md) for the complete agent playbook.
+See [`FREE-VS-PAID.md`](./docs/FREE-VS-PAID.md) for the public service boundary and pricing.
 
 ---
 
@@ -294,9 +290,6 @@ Shomer is live on X Layer, listed on OKX.AI as **ASP #6117**, callable by other 
 ### Documentation
 
 - [`FREE-VS-PAID.md`](./docs/FREE-VS-PAID.md) — product and pricing boundary
-- [`AGENT-SKILL.md`](./docs/AGENT-SKILL.md) — instructions for calling agents
-- [`ASP.md`](./docs/ASP.md) — deployment, discovery, and payment integration
-- [`TESTING.md`](./docs/TESTING.md) — deterministic, live-chain, and paid proof gates
 
 ---
 

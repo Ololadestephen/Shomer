@@ -15,5 +15,8 @@ Screenshot*.png
 Screenshot*.jpg
 
 # Local demo and video-production artifacts
-docs/demo/
 video/
+
+# Keep private working documentation local; publish only the product boundary.
+docs/*
+!docs/FREE-VS-PAID.md
