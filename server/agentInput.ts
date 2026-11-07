@@ -1,10 +1,33 @@
 import type { NetworkId } from '../src/lib/policy/types';
 
-/** Only X Layer networks supported by the MVP are accepted. */
+/** Supports X Layer networks and BOT Chain networks. */
 export function parseAgentNetwork(raw: unknown): NetworkId {
   if (raw === undefined || raw === null || raw === '') return 'mainnet';
-  if (raw === 'mainnet' || raw === 'testnet') return raw;
-  throw new Error('network must be "mainnet" or "testnet"');
+  const str = String(raw).trim().toLowerCase();
+
+  switch (str) {
+    case 'mainnet':
+    case '196':
+    case 'xlayer':
+    case 'xlayer-mainnet':
+      return 'mainnet';
+    case 'testnet':
+    case '1952':
+    case '195':
+    case 'xlayer-testnet':
+      return 'testnet';
+    case 'botchain':
+    case 'botchain-mainnet':
+    case '677':
+      return 'botchain-mainnet';
+    case 'botchain-testnet':
+    case '968':
+      return 'botchain-testnet';
+    default:
+      throw new Error(
+        'network must be "mainnet", "testnet", "botchain-mainnet", or "botchain-testnet"',
+      );
+  }
 }
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {

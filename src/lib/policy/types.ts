@@ -1,6 +1,14 @@
 import type { Address, Hex } from 'viem';
 
-export type NetworkId = 'mainnet' | 'testnet';
+export type NetworkId =
+  | 'mainnet'
+  | 'testnet'
+  | 'xlayer'
+  | 'xlayer-mainnet'
+  | 'xlayer-testnet'
+  | 'botchain'
+  | 'botchain-mainnet'
+  | 'botchain-testnet';
 
 export type CheckStatus = 'blocked' | 'review' | 'matched' | 'skipped';
 export type Verdict = 'blocked' | 'review_required' | 'policy_matched';

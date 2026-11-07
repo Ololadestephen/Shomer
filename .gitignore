@@ -20,3 +20,9 @@ video/
 # Keep private working documentation local; publish only the product boundary.
 docs/*
 !docs/FREE-VS-PAID.md
+
+.desloppify/
+scorecard.png
+out/
+cache/
+

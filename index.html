@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0c1613" />
-    <title>Shomer — X Layer Ship Gate · deployment policy verification</title>
+    <title>Shomer — BOT Chain Ship Gate · deployment policy verification</title>
     <meta
       name="description"
-      content="Verify before you ship or trust. Shomer compares live X Layer deployments with the policy you approved and returns Blocked, Review Required, or Policy Matched with pinned evidence."
+      content="Verify before you ship or trust. Shomer compares live BOT Chain deployments with the policy you approved and returns Blocked, Review Required, or Policy Matched with pinned evidence."
     />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -46,7 +46,7 @@
           <a href="#how-it-works">How it works</a>
           <a href="#what-shomer-checks">Checks</a>
           <a href="#for-agents">Agents</a>
-          <a href="/okx" rel="noopener">OKX.AI</a>
+          <a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain</a>
           <button id="landingVerify" type="button">Open app <b>→</b></button>
         </nav>
       </header>
@@ -54,10 +54,10 @@
       <!-- 1. Hero theater: hub + check rays -->
       <div class="landing-hero hub-hero">
         <div class="hero-copy">
-          <p class="landing-pill"><i></i> X Layer Ship Gate · OKX.AI ASP #6117</p>
+          <p class="landing-pill"><i></i> BOT Chain Ship Gate · Smart Contract Verification</p>
           <h1>Is this the deployment<br /><em>you approved?</em></h1>
           <p class="landing-lead">
-            Agents call Shomer before they ship or trust a deployment. It compares live X Layer state
+            Agents call Shomer before they ship or trust a deployment. It compares live BOT Chain state
             with the policy you approved: owner, Safe, upgrade authority, timelock, and implementation.
           </p>
           <div class="landing-ctas">
@@ -85,7 +85,7 @@
               <span class="hub-tag">Sanity</span><strong>Addresses</strong><small>no zero / dead</small>
             </article>
             <article class="hub-card dim c6" data-label="Deployer">
-              <span class="hub-tag">Deployer</span><strong>Creation</strong><small>OKLink / policy</small>
+              <span class="hub-tag">Deployer</span><strong>Creation</strong><small>BOTScan / policy</small>
             </article>
           </div>
           <div class="hub-core">
@@ -102,7 +102,7 @@
           <article class="feature-card">
             <span class="feature-num">01</span>
             <h3>See what’s on chain</h3>
-            <p>Paste a real X Layer address. We read who owns it, whether it can upgrade, and related facts—no mock data.</p>
+            <p>Paste a real BOT Chain address. We read who owns it, whether it can upgrade, and related facts—no mock data.</p>
           </article>
           <article class="feature-card">
             <span class="feature-num">02</span>
@@ -125,12 +125,11 @@
             <p class="section-kicker">For agents · Ship Gate · A2MCP</p>
             <h2 class="section-head tight">Call Shomer before you ship</h2>
             <p class="proof-lead">
-              Listed on <strong>OKX.AI</strong> as ASP <strong>#6117</strong>.
-              Other agents use Shomer as a <strong>ship gate</strong> on X Layer.
+              Agents use Shomer as an automated <strong>ship gate</strong> on BOT Chain.
             </p>
             <ul class="proof-list">
               <li><strong>Free</strong> — packs · read · draft · verify · ship-gate (verdict + evidence)</li>
-              <li><strong>Paid</strong> — Shomer Deep Verify: privilege map · reviewed artifact · auditor brief · x402 $0.05 USDC on eip155:196</li>
+              <li><strong>On-Chain Registry</strong> — publish immutable verification receipts on BOT Chain</li>
               <li><strong>Catalog</strong> — <code>GET /api/agent</code></li>
               <li>Verdicts: Blocked · Review Required · Policy Matched — never invents a pass</li>
             </ul>
@@ -152,10 +151,10 @@
             <pre id="agentCurlSample" class="agent-pre">curl -sS -X POST https://shomer-agent-api.mixed-mouse.workers.dev/api/agent/verify \
   -H 'Content-Type: application/json' \
   -d '{
-    "network": "mainnet",
-    "contractAddress": "0xcA11bde05977b3631167028862bE2a173976CA11",
+    "network": "botchain-mainnet",
+    "contractAddress": "0x1559C3a6B02E331307438D7839016EA5A827F467",
     "policy": { "upgradeable": false },
-    "projectName": "agent-demo"
+    "projectName": "cipher-ballot"
   }'</pre>
             <p class="agent-term-foot">Real RPC. Deterministic checks. Never invents a pass.</p>
           </div>
@@ -183,7 +182,7 @@
             <div class="vm-head">
               <span class="vm-orb"></span>
               <div>
-                <small>APPROVED v1 · X LAYER MAINNET</small>
+                <small>APPROVED v1 · BOT CHAIN MAINNET</small>
                 <strong>Review Required</strong>
               </div>
               <b>67%<span>coverage</span></b>
@@ -215,7 +214,7 @@
           </div>
           <div class="proof-ui brief-mock" aria-hidden="true">
             <div class="bm-brand"><span class="landing-mark tiny"><i></i></span> SHOMER <small>AUDITOR BRIEF</small></div>
-            <p class="bm-meta">Manifest v1 · Block #65,360,103 · chain 196</p>
+            <p class="bm-meta">Manifest v1 · Block #19,263,053 · chain 677</p>
             <div class="bm-verdict">
               <span class="vm-orb review"></span>
               <div><small>LAUNCH VERDICT</small><strong>Review Required</strong></div>
@@ -237,8 +236,7 @@
           <label>
             <span>Network</span>
             <select id="landingNetwork" name="network">
-              <option value="mainnet">X Layer Mainnet</option>
-              <option value="testnet">X Layer Testnet</option>
+              <option value="botchain-mainnet" selected>BOT Chain Mainnet (Chain 677)</option>
             </select>
           </label>
           <label class="grow">
@@ -248,7 +246,7 @@
           <button class="landing-primary" type="submit" id="landingGetStarted">Continue <b>→</b></button>
         </form>
         <p class="sample-hint">
-          <button type="button" class="text-link" id="landingTrySample">Try sample · Multicall3 on mainnet</button>
+          <button type="button" class="text-link" id="landingTryBotChain">Sample: CipherBallot on BOT Chain Mainnet</button>
         </p>
       </div>
 
@@ -259,7 +257,7 @@
         <h2>Ship what you approved.</h2>
         <p>A deployment verdict is not an audit or a promise of safety.</p>
         <p class="landing-close-meta">
-          X Layer Ship Gate · ASP #6117 ·
+          BOT Chain Mainnet Ship Gate · On-Chain Registry ·
           <a href="#for-agents">Free A2MCP for agents</a>
         </p>
         <div class="landing-ctas landing-close-ctas">
@@ -270,6 +268,11 @@
 
       <div class="landing-disclaimer">
         <p>Shomer verifies that the real deployment matches the policy you declared. It does not audit code, find vulnerabilities, or assert that a contract is safe. AccessControl checks are a limited probe only.</p>
+        <div class="official-links" style="margin-top: 14px; font-size: 11px; opacity: 0.85; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
+          <span>Official:</span>
+          <a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a>
+          <a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOTScan Mainnet (677)</a>
+        </div>
       </div>
     </section>
     <div class="grain" aria-hidden="true"></div>
@@ -294,9 +297,9 @@
           </button>
         </nav>
         <div class="sidebar-bottom">
-          <button class="network-pill" data-network-switch type="button" aria-label="Switch X Layer network">
-            <i></i><span class="network-label">X Layer Mainnet</span> <span class="network-chevron">⌄</span>
-          </button>
+          <div class="network-pill" aria-label="BOT Chain Mainnet">
+            <i></i><span class="network-label">BOT Chain Mainnet</span>
+          </div>
         </div>
       </aside>
 
@@ -313,9 +316,9 @@
             </div>
           </div>
           <div class="top-actions">
-            <button class="network-pill topbar-network" data-network-switch type="button" aria-label="Switch X Layer network">
-              <i></i><span class="network-label">Mainnet</span>
-            </button>
+            <div class="network-pill topbar-network" aria-label="BOT Chain Mainnet">
+              <i></i><span class="network-label">BOT Chain Mainnet</span>
+            </div>
             <button class="button ghost small" id="newScanBtn" type="button">Reset</button>
           </div>
         </header>
@@ -353,8 +356,7 @@
                 <label class="field compact">
                   <span>Network</span>
                   <select name="network" id="fieldNetwork">
-                    <option value="mainnet">X Layer Mainnet</option>
-                    <option value="testnet">X Layer Testnet</option>
+                    <option value="botchain-mainnet" selected>BOT Chain Mainnet (Chain 677)</option>
                   </select>
                 </label>
                 <label class="field wide">
@@ -471,16 +473,20 @@
               <li><strong>Check</strong> — does the chain still match?</li>
             </ol>
             <div class="empty-actions">
-              <button class="button primary" type="button" id="trySampleContract">
-                Try sample · Multicall3 <span>→</span>
+              <button class="button primary" type="button" id="tryBotChainSample">
+                Sample: CipherBallot on BOT Chain Mainnet <span>→</span>
               </button>
-              <p class="empty-sample-note">Mainnet · 0xcA11…CA11 · great for a first live read</p>
+              <p class="empty-sample-note">Try a live read on BOT Chain Mainnet (Chain 677)</p>
             </div>
           </section>
 
           <footer class="disclaimer">
             <p>
               Evidence only — not an audit, not a safety claim.
+            </p>
+            <p style="margin-top:6px;font-size:11px;opacity:0.85;">
+              <a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain</a> ·
+              <a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOTScan Mainnet (677)</a>
             </p>
           </footer>
         </section>
@@ -673,12 +679,17 @@
           <div class="app-page-head">
             <div>
               <p class="eyebrow app-eyebrow"><span></span> SHAREABLE SUMMARY</p>
-              <h1>Brief</h1>
-              <p class="app-page-sub">A printable report of what we checked. It is evidence—not a security audit.</p>
+              <h1>Brief &amp; Receipts</h1>
+              <p class="app-page-sub">Export printable Auditor Briefs, publish immutable verification receipts on BOT Chain, and verify public report integrity.</p>
             </div>
-            <button class="button primary" id="openBrief2" type="button">
-              Open brief <span>→</span>
-            </button>
+            <div class="hero-actions app-primary-actions">
+              <button class="button ghost" id="exportReportBtn" type="button">
+                Export report JSON <span>↓</span>
+              </button>
+              <button class="button primary" id="openBrief2" type="button">
+                Open brief <span>→</span>
+              </button>
+            </div>
           </div>
           <div class="report-table card" id="reportTable">
             <div class="report-row report-header">
@@ -690,6 +701,61 @@
                 <small>Run Verify vs approved to generate one.</small>
               </div>
             </div>
+          </div>
+
+          <!-- Publication to on-chain registry -->
+          <div class="card" id="publishCard" style="margin-top:24px;">
+            <div class="card-heading">
+              <p class="eyebrow"><span></span> ON-CHAIN VERIFICATION REGISTRY</p>
+              <h2>Publish verification receipt</h2>
+              <p class="muted" style="margin: 4px 0 16px; font-size: 13px;">
+                Store an immutable publication record on-chain binding your address, inspected chain, target contract, block, policy hash, and report hash. A receipt attests publication and integrity only—not an audit or safety certificate.
+              </p>
+            </div>
+
+            <div class="publish-controls" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px;">
+              <button class="button dark" id="connectWalletBtn" type="button">
+                Connect wallet
+              </button>
+              <span id="walletStatusText" class="muted" style="font-size:12px;">No wallet connected</span>
+              <button class="button primary" id="publishReceiptBtn" type="button" disabled style="margin-left:auto;">
+                Publish verification to registry <b>→</b>
+              </button>
+            </div>
+
+            <div id="publishStatusBox" hidden style="background:#f4f6f0;border:1px solid var(--line);border-radius:8px;padding:14px;font-size:12px;">
+              <div id="publishStatusMsg" style="font-weight:600;margin-bottom:6px;">Ready to publish</div>
+              <div id="publishReceiptDetails" style="font-family:var(--mono);word-break:break-all;"></div>
+            </div>
+          </div>
+
+          <!-- Receipt lookup & verification -->
+          <div class="card" id="lookupCard" style="margin-top:24px;">
+            <div class="card-heading">
+              <p class="eyebrow"><span></span> INTEGRITY VERIFIER</p>
+              <h2>Verify receipt &amp; report integrity</h2>
+              <p class="muted" style="margin: 4px 0 16px; font-size: 13px;">
+                Drop or paste an exported report JSON, or enter a Record ID to verify against the on-chain registry. Any alteration in report findings, block, policy, or verdict immediately invalidates the comparison.
+              </p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div>
+                <label style="display:block;font-size:11px;font-weight:600;margin-bottom:6px;">Upload / Drop Report JSON</label>
+                <input type="file" id="reportFileInput" accept=".json,application/json" style="width:100%;font-size:12px;" />
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:600;margin-bottom:6px;">Or Paste Record ID / Report JSON</label>
+                <input type="text" id="reportLookupInput" placeholder="0x… record ID or JSON snippet" spellcheck="false" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--line);border-radius:6px;" />
+              </div>
+            </div>
+
+            <div style="margin-top:14px;display:flex;gap:10px;">
+              <button class="button dark small" id="verifyIntegrityBtn" type="button">Verify integrity</button>
+              <button class="button ghost small" id="clearIntegrityBtn" type="button">Clear</button>
+            </div>
+
+            <div id="integrityResultBox" hidden style="margin-top:16px;padding:14px;border-radius:8px;font-size:12px;"></div>
           </div>
         </section>
       </main>
@@ -733,7 +799,7 @@
     <div class="toast" id="toast" role="status"></div>
     <div class="scan-overlay" id="scanOverlay" hidden>
       <div class="scan-box">
-        <p class="eyebrow"><span></span> LIVE X LAYER READ</p>
+        <p class="eyebrow"><span></span> LIVE BOT CHAIN READ</p>
         <h3 id="scanStep">Connecting to RPC…</h3>
         <p id="scanDetail">No results are simulated.</p>
         <div class="scan-bar"><i id="scanBar"></i></div>

@@ -39,6 +39,15 @@ import {
   type ReviewedArtifactInput,
 } from './paidVerification';
 import { isPlainObject, parseAgentNetwork } from './agentInput';
+import { resolveChain } from '../src/lib/chain/chains';
+
+function chainIdFor(network: NetworkId): number {
+  try {
+    return resolveChain(network).id;
+  } catch {
+    return 196;
+  }
+}
 
 export interface AgentVerifyOptions {
   /**
@@ -417,7 +426,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: String(input.contractAddress ?? ''),
         blockNumber: 0,
         requestedBlock,
@@ -468,7 +477,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: String(input.contractAddress ?? ''),
         blockNumber: 0,
         verdict: 'review_required',
@@ -490,7 +499,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: String(input.contractAddress ?? ''),
         blockNumber: 0,
         requestedBlock,
@@ -513,7 +522,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: addr,
         blockNumber: 0,
         requestedBlock,
@@ -537,7 +546,7 @@ export async function runAgentVerify(
           service: 'shomer',
           tier,
           network,
-          chainId: network === 'mainnet' ? 196 : 1952,
+          chainId: chainIdFor(network),
           contractAddress: addr,
           blockNumber: 0,
           requestedBlock,
@@ -559,7 +568,7 @@ export async function runAgentVerify(
           service: 'shomer',
           tier,
           network,
-          chainId: network === 'mainnet' ? 196 : 1952,
+          chainId: chainIdFor(network),
           contractAddress: addr,
           blockNumber: 0,
           requestedBlock,
@@ -586,7 +595,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: addr,
         blockNumber: 0,
         requestedBlock,
@@ -619,7 +628,7 @@ export async function runAgentVerify(
           service: 'shomer',
           tier,
           network,
-          chainId: network === 'mainnet' ? 196 : 1952,
+          chainId: chainIdFor(network),
           contractAddress: addr,
           blockNumber: 0,
           requestedBlock,
@@ -774,7 +783,7 @@ export async function runAgentVerify(
         service: 'shomer',
         tier,
         network,
-        chainId: network === 'mainnet' ? 196 : 1952,
+        chainId: chainIdFor(network),
         contractAddress: addr,
         blockNumber: 0,
         requestedBlock,
@@ -799,8 +808,8 @@ export function agentServiceCatalog(baseUrl: string) {
     marketplace: 'OKX.AI',
     description:
       'X Layer Ship Gate: agents verify live deployments against approved policy before shipping. Free Shomer Verify: packs, read, draft, verify, ship-gate. Paid Shomer Deep Verify: privilege map, reviewed artifact/code-hash, auditor brief, recovery (x402 USDC on eip155:196). Not an audit; never claims safe.',
-    tags: ['xlayer', 'policy', 'deployment', 'verification', 'a2mcp', 'x402'],
-    network: 'X Layer mainnet (196) and testnet (1952)',
+    tags: ['xlayer', 'botchain', 'policy', 'deployment', 'verification', 'a2mcp', 'x402'],
+    network: 'BOT Chain mainnet (677) & testnet (968), X Layer mainnet (196) & testnet (1952)',
     marketplaceServices: [
       {
         name: 'Shomer Verify',

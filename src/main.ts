@@ -44,8 +44,35 @@ import {
   isPlaceholderProjectName,
   suggestedProjectName,
 } from './lib/utils/tokenLabel';
+import {
+  resolveChain,
+  getExplorerTxUrl,
+  SHOMER_REGISTRY_ADDRESSES,
+} from './lib/chain/chains';
+import { shomerRegistryAbi } from './lib/contracts/registryAbi';
+import {
+  buildPublicReportSnapshot,
+  computeReportHash,
+  computeRecordId,
+  verifyReportIntegrity,
+  type ShomerPublicReport,
+  type OnchainVerificationRecord,
+} from './lib/report/reportSnapshot';
+import {
+  createPublicClient,
+  encodeFunctionData,
+  fallback,
+  getAddress,
+  http,
+  type Address,
+  type Hex,
+} from 'viem';
 
 let policy: PolicyState = loadPolicyState();
+if (!policy.draft.network || policy.draft.network === 'mainnet' || policy.draft.network === 'testnet') {
+  policy.draft.network = 'botchain-mainnet';
+  savePolicyState(policy);
+}
 /** @deprecated use policy.draft — kept as alias for readability in forms */
 let manifest: ManifestFields = policy.draft;
 let lastScan: ScanRun | null = loadLastScan();
@@ -53,9 +80,9 @@ let lastFacts: ObservedFacts | null = loadLastFacts();
 /** Filter for check list: status, or skip-reason subfilters. */
 let checkFilter: CheckStatus | 'all' | 'out_of_scope' | 'evidence_missing' = 'all';
 
-/** Public Multicall3 — reliable live-read demo on X Layer mainnet */
-const SAMPLE_MAINNET_CONTRACT = '0xcA11bde05977b3631167028862bE2a173976CA11';
-const SAMPLE_PROJECT_NAME = 'Multicall3 sample';
+/** Public CipherBallot — reliable live-read demo on BOT Chain mainnet */
+const SAMPLE_BOTCHAIN_CONTRACT = '0x1559C3a6B02E331307438D7839016EA5A827F467';
+const SAMPLE_BOTCHAIN_PROJECT_NAME = 'CipherBallot Governance';
 
 
 const FIELD_LABELS: Partial<Record<ManifestFieldKey, string>> = {
@@ -279,7 +306,8 @@ function collectManifestFromForms(): ManifestFields {
     ($('#fieldProjectName') as HTMLInputElement)?.value.trim() ||
     policy.draft.projectName;
   const network = (($('#fieldNetwork') as HTMLSelectElement)?.value ||
-    policy.draft.network) as 'mainnet' | 'testnet';
+    policy.draft.network ||
+    'botchain-mainnet') as any;
   const contractAddress =
     ($('#fieldContract') as HTMLInputElement)?.value.trim() ||
     policy.draft.contractAddress;
@@ -368,9 +396,9 @@ function fillDraftFromLive() {
   syncDraftFromForm();
   policy = applyLiveImportToDraft(policy, lastFacts);
   // Keep network/address from verify form if present
-  const net = ($('#fieldNetwork') as HTMLSelectElement)?.value as 'mainnet' | 'testnet' | undefined;
+  const net = ($('#fieldNetwork') as HTMLSelectElement)?.value;
   const ca = ($('#fieldContract') as HTMLInputElement)?.value.trim();
-  if (net) policy.draft.network = net;
+  if (net) policy.draft.network = net as any;
   if (ca) policy.draft.contractAddress = ca;
   if (lastFacts.contractAddress && !ca) {
     policy.draft.contractAddress = lastFacts.contractAddress;
@@ -424,7 +452,12 @@ function clearLastScanSafe() {
 /** Reset session: empty draft, no approved version (next approve = v1), clear facts/scan. */
 function resetSession() {
   clearAllShomerState();
-  policy = emptyPolicyState();
+  policy = emptyPolicyState({
+    draft: {
+      ...emptyManifest(),
+      network: 'botchain-mainnet',
+    },
+  });
   manifest = policy.draft;
   lastScan = null;
   lastFacts = null;
@@ -436,7 +469,7 @@ function resetSession() {
   renderAll();
   showPanel('overview');
   ca?.focus();
-  toast('Reset — work cleared. Next lock-in will be v1 again.');
+  toast('Reset — work cleared on BOT Chain. Next lock-in will be v1 again.');
 }
 
 function renderManifestStatus() {
@@ -535,7 +568,7 @@ function updateEmptyState() {
     body.innerHTML = `Open <strong>Your rules</strong>. You can copy from chain, edit, then <strong>Lock in</strong>. We only give a match/block after you lock and Check.`;
   } else {
     title.textContent = 'Start with a contract';
-    body.innerHTML = `Enter an X Layer address above and <strong>Read what’s on chain</strong>.`;
+    body.innerHTML = `Enter a BOT Chain address above and <strong>Read what’s on chain</strong>.`;
   }
 }
 
@@ -583,15 +616,9 @@ function initHubFocusCycle() {
 }
 
 function updateNetworkLabel() {
-  const net =
-    (($('#fieldNetwork') as HTMLSelectElement)?.value as
-      | 'mainnet'
-      | 'testnet') || policy.draft.network;
-  const full = networkLabel(net);
-  const short = net === 'testnet' ? 'Testnet' : 'Mainnet';
   document.querySelectorAll('.network-label').forEach((el) => {
     const node = el as HTMLElement;
-    node.textContent = node.closest('.topbar-network') ? short : full;
+    node.textContent = node.closest('.topbar-network') ? 'BOT Chain' : 'BOT Chain Mainnet';
   });
 }
 
@@ -717,7 +744,7 @@ function renderLiveOnlyState(facts: ObservedFacts) {
   const code = $('#projectCode');
   if (name) name.textContent = policy.draft.projectName || 'Live read';
   if (badge)
-    badge.innerHTML = `<i></i> ${facts.network === 'mainnet' ? 'MAINNET' : 'TESTNET'}`;
+    badge.innerHTML = '<i></i> BOT CHAIN MAINNET';
   if (contract) contract.textContent = shortAddress(facts.contractAddress, 4);
   if (block) block.textContent = `#${facts.blockNumber.toLocaleString()}`;
   if (code)
@@ -871,7 +898,7 @@ function renderProject(scan: ScanRun) {
   const code = $('#projectCode');
   if (name) name.textContent = scan.manifest.projectName || 'Unnamed project';
   if (badge)
-    badge.innerHTML = `<i></i> ${scan.network === 'mainnet' ? 'MAINNET' : 'TESTNET'}`;
+    badge.innerHTML = '<i></i> BOT CHAIN MAINNET';
   if (contract) contract.textContent = shortAddress(scan.contractAddress, 4);
   if (block) block.textContent = `#${scan.facts.blockNumber.toLocaleString()}`;
   if (code)
@@ -1077,6 +1104,9 @@ function renderReportEmpty() {
         <small>Complete a live scan to generate an Auditor Brief.</small>
       </div>
     </div>`;
+  const exportBtn = document.getElementById('exportReportBtn') as HTMLButtonElement | null;
+  if (exportBtn) exportBtn.disabled = true;
+  updateWalletUI();
 }
 
 function renderReport(scan: ScanRun) {
@@ -1102,6 +1132,9 @@ function renderReport(scan: ScanRun) {
       <button class="text-btn" id="openBrief3" type="button">View brief →</button>
     </div>`;
   $('#openBrief3')?.addEventListener('click', () => openBrief());
+  const exportBtn = document.getElementById('exportReportBtn') as HTMLButtonElement | null;
+  if (exportBtn) exportBtn.disabled = false;
+  updateWalletUI();
 }
 
 function openEvidence(result: CheckResult) {
@@ -1294,8 +1327,9 @@ function openBrief() {
 async function readLiveState() {
   syncDraftFromForm();
   const network =
-    (($('#fieldNetwork') as HTMLSelectElement)?.value as 'mainnet' | 'testnet') ||
-    policy.draft.network;
+    (($('#fieldNetwork') as HTMLSelectElement)?.value ||
+    policy.draft.network ||
+    'botchain-mainnet') as any;
   const addrRaw =
     ($('#fieldContract') as HTMLInputElement)?.value.trim() ||
     policy.draft.contractAddress;
@@ -1319,7 +1353,7 @@ async function readLiveState() {
   setButtonsBusy(true);
 
   try {
-    if (step) step.textContent = 'Connecting to X Layer RPC…';
+    if (step) step.textContent = 'Connecting to BOT Chain RPC…';
     if (detail) detail.textContent = networkLabel(network);
     await tick(150);
     if (step) step.textContent = 'Reading live ownership, proxy, timelock…';
@@ -1374,7 +1408,7 @@ async function verifyAgainstApproved() {
   const startedAt = new Date().toISOString();
 
   try {
-    if (step) step.textContent = 'Connecting to X Layer RPC…';
+    if (step) step.textContent = 'Connecting to BOT Chain RPC…';
     if (detail) detail.textContent = `Manifest v${approved.version}`;
     await tick(120);
     if (step) step.textContent = 'Reading live state…';
@@ -1460,20 +1494,501 @@ function shorten(s: string, max = 72): string {
 
 
 function loadSampleContract(opts?: { autoRead?: boolean; enterFromLanding?: boolean }) {
+  return loadBotChainSampleContract(opts);
+}
+
+function loadBotChainSampleContract(opts?: { autoRead?: boolean; enterFromLanding?: boolean }) {
   const autoRead = opts?.autoRead ?? true;
   const netSel = document.getElementById('fieldNetwork') as HTMLSelectElement | null;
   const caInput = document.getElementById('fieldContract') as HTMLInputElement | null;
   const nameInput = document.getElementById('fieldProjectName') as HTMLInputElement | null;
-  if (netSel) netSel.value = 'mainnet';
-  if (caInput) caInput.value = SAMPLE_MAINNET_CONTRACT;
-  if (nameInput) nameInput.value = SAMPLE_PROJECT_NAME;
-  policy.draft.network = 'mainnet';
-  policy.draft.contractAddress = SAMPLE_MAINNET_CONTRACT;
-  policy.draft.projectName = SAMPLE_PROJECT_NAME;
+  if (netSel) netSel.value = 'botchain-mainnet';
+  if (caInput) caInput.value = SAMPLE_BOTCHAIN_CONTRACT;
+  if (nameInput) nameInput.value = SAMPLE_BOTCHAIN_PROJECT_NAME;
+  policy.draft.network = 'botchain-mainnet';
+  policy.draft.contractAddress = SAMPLE_BOTCHAIN_CONTRACT;
+  policy.draft.projectName = SAMPLE_BOTCHAIN_PROJECT_NAME;
   savePolicyState(policy);
-  toast('Sample Multicall3 loaded');
+  toast('Sample CipherBallot on BOT Chain loaded');
   if (autoRead) {
     window.setTimeout(() => void readLiveState(), opts?.enterFromLanding ? 520 : 80);
+  }
+}
+
+function verdictToCode(verdict: string): number {
+  if (verdict === 'matched' || verdict === 'policy_matched') return 0;
+  if (verdict === 'review_required' || verdict === 'review') return 1;
+  return 2;
+}
+
+function exportReportJson() {
+  if (!lastScan) {
+    toast('No verification available to export.');
+    return;
+  }
+  const report = buildPublicReportSnapshot(lastScan);
+  const jsonStr = JSON.stringify(report, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${report.reportId}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported report ${report.reportId}.json`);
+}
+
+let userWalletAddress: Address | null = null;
+let userWalletChainId: number | null = null;
+
+function updateWalletUI() {
+  const connectBtn = document.getElementById('connectWalletBtn');
+  const statusText = document.getElementById('walletStatusText');
+  const publishBtn = document.getElementById('publishReceiptBtn') as HTMLButtonElement | null;
+
+  if (!userWalletAddress) {
+    if (connectBtn) connectBtn.textContent = 'Connect wallet';
+    if (statusText) statusText.textContent = 'No wallet connected';
+    if (publishBtn) publishBtn.disabled = true;
+  } else {
+    if (connectBtn) connectBtn.textContent = shortAddress(userWalletAddress, 4);
+    let chainName = 'Unknown network';
+    try {
+      if (userWalletChainId) chainName = resolveChain(userWalletChainId).name;
+    } catch {
+      chainName = `Unsupported chain (${userWalletChainId})`;
+    }
+    if (statusText) {
+      statusText.textContent = `Connected: ${shortAddress(userWalletAddress, 4)} on ${chainName}`;
+    }
+    if (publishBtn) publishBtn.disabled = !lastScan;
+  }
+}
+
+async function connectWallet(): Promise<Address | null> {
+  const ethereum = (window as unknown as { ethereum?: any }).ethereum;
+  if (!ethereum) {
+    toast('No Web3 wallet found. Please install MetaMask, OKX Wallet, or Bohr Wallet.');
+    return null;
+  }
+  try {
+    const accounts = (await ethereum.request({ method: 'eth_requestAccounts' })) as string[];
+    if (!accounts || accounts.length === 0) {
+      toast('No account selected.');
+      return null;
+    }
+    userWalletAddress = getAddress(accounts[0]);
+    const chainHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
+    userWalletChainId = parseInt(chainHex, 16);
+
+    // Subscribe to events once
+    if (ethereum.on && !(window as any).__shomerWalletListening) {
+      (window as any).__shomerWalletListening = true;
+      ethereum.on('accountsChanged', (newAccounts: string[]) => {
+        if (!newAccounts || newAccounts.length === 0) {
+          userWalletAddress = null;
+        } else {
+          userWalletAddress = getAddress(newAccounts[0]);
+        }
+        updateWalletUI();
+      });
+      ethereum.on('chainChanged', (newChainHex: string) => {
+        userWalletChainId = parseInt(newChainHex, 16);
+        updateWalletUI();
+      });
+    }
+
+    updateWalletUI();
+    toast(`Wallet connected: ${shortAddress(userWalletAddress, 4)}`);
+    return userWalletAddress;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    toast(`Wallet connection failed: ${msg}`);
+    return null;
+  }
+}
+
+async function publishVerificationReceipt() {
+  if (!lastScan) {
+    toast('Run verification first to generate a report snapshot.');
+    return;
+  }
+  const ethereum = (window as unknown as { ethereum?: any }).ethereum;
+  if (!ethereum) {
+    toast('No Web3 wallet found. Please install MetaMask, OKX Wallet, or Bohr Wallet.');
+    return;
+  }
+
+  if (!userWalletAddress) {
+    const connected = await connectWallet();
+    if (!connected) return;
+  }
+
+  const targetChain = resolveChain(lastScan.manifest.network || 'mainnet');
+  const publishBtn = document.getElementById('publishReceiptBtn') as HTMLButtonElement | null;
+  const statusBox = document.getElementById('publishStatusBox');
+  const statusMsg = document.getElementById('publishStatusMsg');
+  const detailsBox = document.getElementById('publishReceiptDetails');
+
+  // Verify wallet network matches targetChain.id
+  try {
+    const currentChainHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
+    const currentChainId = parseInt(currentChainHex, 16);
+
+    if (currentChainId !== targetChain.id) {
+      if (statusBox) statusBox.hidden = false;
+      if (statusMsg) statusMsg.textContent = `Switching network to ${targetChain.name} (${targetChain.id})…`;
+
+      try {
+        await ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${targetChain.id.toString(16)}` }],
+        });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: `0x${targetChain.id.toString(16)}`,
+                chainName: targetChain.name,
+                nativeCurrency: targetChain.nativeCurrency,
+                rpcUrls: [targetChain.rpcUrls.default.http[0]],
+                blockExplorerUrls: targetChain.blockExplorers?.default?.url
+                  ? [targetChain.blockExplorers.default.url]
+                  : undefined,
+              },
+            ],
+          });
+        } else {
+          throw switchError;
+        }
+      }
+      userWalletChainId = targetChain.id;
+      updateWalletUI();
+    }
+  } catch (switchErr: any) {
+    if (statusBox) statusBox.hidden = false;
+    if (statusMsg) {
+      statusMsg.textContent = `Network switch rejected. Publication blocked: wallet must be on ${targetChain.name} (${targetChain.id}).`;
+    }
+    toast(`Please switch wallet network to ${targetChain.name} (${targetChain.id})`);
+    return;
+  }
+
+  const registryAddress = SHOMER_REGISTRY_ADDRESSES[targetChain.id];
+  if (!registryAddress) {
+    toast(`No Shomer registry configured on ${targetChain.name} (${targetChain.id}).`);
+    return;
+  }
+
+  if (publishBtn) publishBtn.disabled = true;
+  if (statusBox) statusBox.hidden = false;
+  if (statusMsg) statusMsg.textContent = `Preparing receipt for ${targetChain.name}…`;
+
+  try {
+    const snapshot = buildPublicReportSnapshot(lastScan);
+    const reportHash = computeReportHash(snapshot);
+    const pHash = snapshot.policyHash;
+    const verdictCode = verdictToCode(lastScan.verdict);
+    const targetAddr = getAddress(lastScan.contractAddress);
+    const inspectedBlock = BigInt(lastScan.facts.blockNumber);
+
+    const data = encodeFunctionData({
+      abi: shomerRegistryAbi,
+      functionName: 'publishVerification',
+      args: [
+        BigInt(targetChain.id),
+        targetAddr,
+        inspectedBlock,
+        pHash,
+        reportHash,
+        verdictCode,
+      ],
+    });
+
+    if (statusMsg) statusMsg.textContent = 'Awaiting signature in wallet…';
+
+    const txHash = (await ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: userWalletAddress,
+          to: registryAddress,
+          data,
+        },
+      ],
+    })) as Hex;
+
+    const recordId = computeRecordId(
+      userWalletAddress!,
+      BigInt(targetChain.id),
+      targetAddr,
+      inspectedBlock,
+      pHash,
+      reportHash,
+    );
+
+    const txUrl = getExplorerTxUrl(targetChain.id, txHash);
+
+    if (statusMsg) {
+      statusMsg.innerHTML = `✓ Verification receipt published to ${escapeHtml(targetChain.name)}!`;
+    }
+    if (detailsBox) {
+      detailsBox.innerHTML = `
+        <div style="margin-top:6px;line-height:1.6;">
+          <div><strong>Tx:</strong> <a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline;">${txHash}</a></div>
+          <div><strong>Record ID:</strong> <code>${recordId}</code></div>
+          <div><strong>Report Hash:</strong> <code>${reportHash}</code></div>
+          <div><strong>Policy Hash:</strong> <code>${pHash}</code></div>
+          <div><strong>Publisher:</strong> <code>${userWalletAddress}</code></div>
+          <div><strong>Inspected Block:</strong> #${inspectedBlock.toString()}</div>
+          <div><strong>Registry:</strong> <code>${registryAddress}</code></div>
+        </div>
+      `;
+    }
+
+    toast('Verification receipt published on-chain!');
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (statusMsg) statusMsg.textContent = `Publication failed: ${msg}`;
+    toast(`Publication failed: ${msg}`);
+  } finally {
+    if (publishBtn) publishBtn.disabled = false;
+  }
+}
+
+async function handleVerifyIntegrity() {
+  const fileInput = document.getElementById('reportFileInput') as HTMLInputElement | null;
+  const textInput = document.getElementById('reportLookupInput') as HTMLInputElement | null;
+  const resultBox = document.getElementById('integrityResultBox');
+
+  if (!resultBox) return;
+  resultBox.hidden = false;
+  resultBox.innerHTML = 'Verifying report integrity…';
+  resultBox.style.background = '#f4f6f0';
+  resultBox.style.border = '1px solid var(--line)';
+  resultBox.style.color = 'inherit';
+
+  let rawContent = '';
+  if (fileInput?.files && fileInput.files.length > 0) {
+    try {
+      rawContent = await fileInput.files[0].text();
+    } catch (e) {
+      resultBox.style.background = '#fef2f2';
+      resultBox.style.borderColor = '#fca5a5';
+      resultBox.innerHTML = `<strong>Error reading file:</strong> ${(e as Error).message}`;
+      return;
+    }
+  } else if (textInput?.value.trim()) {
+    rawContent = textInput.value.trim();
+  }
+
+  if (!rawContent) {
+    resultBox.style.background = '#fef2f2';
+    resultBox.style.borderColor = '#fca5a5';
+    resultBox.innerHTML = '<strong>Please upload a report JSON file or paste report JSON / Record ID.</strong>';
+    return;
+  }
+
+  // Check if rawContent is a 32-byte Record ID (0x followed by 64 hex characters)
+  if (/^0x[0-9a-fA-F]{64}$/.test(rawContent)) {
+    const recordId = rawContent as Hex;
+    resultBox.innerHTML = `Querying on-chain registry for Record ID: <code>${recordId}</code>…`;
+
+    const candidateChains = [resolveChain(677), resolveChain(196), resolveChain(968), resolveChain(1952)];
+    let foundRecord: OnchainVerificationRecord | null = null;
+    let foundChainId: number | null = null;
+
+    for (const chain of candidateChains) {
+      const regAddr = SHOMER_REGISTRY_ADDRESSES[chain.id];
+      if (!regAddr) continue;
+      try {
+        const client = createPublicClient({
+          chain,
+          transport: fallback([http()]),
+        });
+        const rec = (await client.readContract({
+          address: regAddr,
+          abi: shomerRegistryAbi,
+          functionName: 'getRecord',
+          args: [recordId],
+        })) as any;
+
+        if (rec && rec.publisher && rec.publisher !== '0x0000000000000000000000000000000000000000') {
+          foundRecord = {
+            publisher: rec.publisher,
+            inspectedChain: Number(rec.inspectedChain),
+            targetContract: rec.targetContract,
+            inspectedBlock: Number(rec.inspectedBlock),
+            policyHash: rec.policyHash,
+            reportHash: rec.reportHash,
+            verdict: Number(rec.verdict),
+            publishedAt: Number(rec.publishedAt),
+          };
+          foundChainId = chain.id;
+          break;
+        }
+      } catch {
+        // Continue search
+      }
+    }
+
+    if (foundRecord && foundChainId) {
+      const vLabel =
+        foundRecord.verdict === 0
+          ? 'MATCHED'
+          : foundRecord.verdict === 1
+            ? 'REVIEW REQUIRED'
+            : 'BLOCKED';
+      resultBox.style.background = '#f0fdf4';
+      resultBox.style.borderColor = '#86efac';
+      resultBox.innerHTML = `
+        <div style="font-weight:600;color:#166534;margin-bottom:6px;">✓ On-Chain Record Found on ${resolveChain(foundChainId).name} (${foundChainId})</div>
+        <div style="font-family:var(--mono);line-height:1.6;">
+          <div><strong>Publisher:</strong> <code>${foundRecord.publisher}</code></div>
+          <div><strong>Target:</strong> <code>${foundRecord.targetContract}</code></div>
+          <div><strong>Inspected Chain:</strong> ${foundRecord.inspectedChain}</div>
+          <div><strong>Inspected Block:</strong> #${foundRecord.inspectedBlock.toLocaleString()}</div>
+          <div><strong>Verdict:</strong> ${vLabel}</div>
+          <div><strong>Policy Hash:</strong> <code>${foundRecord.policyHash}</code></div>
+          <div><strong>Report Hash:</strong> <code>${foundRecord.reportHash}</code></div>
+          <div><strong>Published:</strong> ${new Date(foundRecord.publishedAt * 1000).toISOString()}</div>
+        </div>
+      `;
+      return;
+    } else {
+      resultBox.style.background = '#fef2f2';
+      resultBox.style.borderColor = '#fca5a5';
+      resultBox.innerHTML = `<strong>Record not found:</strong> No registry record exists for <code>${recordId}</code> on checked chains.`;
+      return;
+    }
+  }
+
+  // Parse as JSON report
+  let report: ShomerPublicReport;
+  try {
+    report = JSON.parse(rawContent);
+  } catch (err) {
+    resultBox.style.background = '#fef2f2';
+    resultBox.style.borderColor = '#fca5a5';
+    resultBox.innerHTML = `<strong>Invalid JSON:</strong> ${(err as Error).message}`;
+    return;
+  }
+
+  if (report.format !== 'shomer-public-report/v1') {
+    resultBox.style.background = '#fef2f2';
+    resultBox.style.borderColor = '#fca5a5';
+    resultBox.innerHTML = `<strong>Unsupported report format:</strong> expected "shomer-public-report/v1", got "${escapeHtml(String(report.format))}".`;
+    return;
+  }
+
+  const computedHash = computeReportHash(report);
+  const internalHashMatch =
+    Boolean(report.reportHash) &&
+    computedHash.toLowerCase() === report.reportHash!.toLowerCase();
+
+  if (!internalHashMatch) {
+    resultBox.style.background = '#fef2f2';
+    resultBox.style.borderColor = '#fca5a5';
+    resultBox.innerHTML = `
+      <div style="font-weight:600;color:#991b1b;margin-bottom:6px;">⚠ REPORT TAMPERED OR CORRUPTED</div>
+      <div style="line-height:1.5;">
+        <div>The canonical hash of the report content does not match its internal header.</div>
+        <div><strong>Computed Hash:</strong> <code>${computedHash}</code></div>
+        <div><strong>Header Hash:</strong> <code>${report.reportHash ?? 'missing'}</code></div>
+      </div>
+    `;
+    return;
+  }
+
+  const chain = resolveChain(report.inspectedChain);
+  const regAddr = SHOMER_REGISTRY_ADDRESSES[chain.id];
+
+  let onchainRec: OnchainVerificationRecord | null = null;
+  if (regAddr && report.receipt?.recordId) {
+    try {
+      const client = createPublicClient({ chain, transport: fallback([http()]) });
+      const rec = (await client.readContract({
+        address: regAddr,
+        abi: shomerRegistryAbi,
+        functionName: 'getRecord',
+        args: [report.receipt.recordId as Hex],
+      })) as any;
+
+      if (rec && rec.publisher && rec.publisher !== '0x0000000000000000000000000000000000000000') {
+        onchainRec = {
+          publisher: rec.publisher,
+          inspectedChain: Number(rec.inspectedChain),
+          targetContract: rec.targetContract,
+          inspectedBlock: Number(rec.inspectedBlock),
+          policyHash: rec.policyHash,
+          reportHash: rec.reportHash,
+          verdict: Number(rec.verdict),
+          publishedAt: Number(rec.publishedAt),
+        };
+      }
+    } catch {
+      // Non-fatal if offline
+    }
+  }
+
+  if (onchainRec) {
+    const comparison = verifyReportIntegrity(report, onchainRec);
+    if (comparison.valid) {
+      resultBox.style.background = '#f0fdf4';
+      resultBox.style.borderColor = '#86efac';
+      resultBox.innerHTML = `
+        <div style="font-weight:600;color:#166534;margin-bottom:6px;">✓ AUTHENTIC ON-CHAIN RECEIPT VERIFIED</div>
+        <div style="line-height:1.6;font-family:var(--mono);">
+          <div><strong>Status:</strong> Deterministic report hash matches on-chain record exactly.</div>
+          <div><strong>Inspected Chain:</strong> ${chain.name} (${report.inspectedChain})</div>
+          <div><strong>Target Contract:</strong> ${report.targetContract}</div>
+          <div><strong>Inspected Block:</strong> #${report.inspectedBlock.toLocaleString()}</div>
+          <div><strong>Report Hash:</strong> <code>${report.reportHash}</code></div>
+          <div><strong>Publisher:</strong> <code>${onchainRec.publisher}</code></div>
+          <div><strong>Verdict:</strong> ${report.verdict.toUpperCase()}</div>
+        </div>
+      `;
+    } else {
+      resultBox.style.background = '#fef2f2';
+      resultBox.style.borderColor = '#fca5a5';
+      resultBox.innerHTML = `
+        <div style="font-weight:600;color:#991b1b;margin-bottom:6px;">⚠ INTEGRITY MISMATCH WITH ON-CHAIN RECORD</div>
+        <ul style="margin:6px 0 0;padding-left:18px;">
+          ${comparison.mismatches.map((m) => `<li>${escapeHtml(m)}</li>`).join('')}
+        </ul>
+      `;
+    }
+  } else {
+    // Valid standalone deterministic snapshot
+    resultBox.style.background = '#eff6ff';
+    resultBox.style.borderColor = '#bfdbfe';
+    resultBox.innerHTML = `
+      <div style="font-weight:600;color:#1e40af;margin-bottom:6px;">✓ VALID DETERMINISTIC REPORT SNAPSHOT</div>
+      <div style="line-height:1.6;font-family:var(--mono);">
+        <div><strong>Status:</strong> Canonical keccak256 hash valid. (No on-chain receipt linked yet).</div>
+        <div><strong>Inspected Chain:</strong> ${chain.name} (${report.inspectedChain})</div>
+        <div><strong>Target Contract:</strong> ${report.targetContract}</div>
+        <div><strong>Inspected Block:</strong> #${report.inspectedBlock.toLocaleString()}</div>
+        <div><strong>Report Hash:</strong> <code>${report.reportHash}</code></div>
+        <div><strong>Verdict:</strong> ${report.verdict.toUpperCase()}</div>
+      </div>
+    `;
+  }
+}
+
+function clearIntegrityVerification() {
+  const fileInput = document.getElementById('reportFileInput') as HTMLInputElement | null;
+  const textInput = document.getElementById('reportLookupInput') as HTMLInputElement | null;
+  const resultBox = document.getElementById('integrityResultBox');
+  if (fileInput) fileInput.value = '';
+  if (textInput) textInput.value = '';
+  if (resultBox) {
+    resultBox.hidden = true;
+    resultBox.innerHTML = '';
   }
 }
 
@@ -1613,10 +2128,14 @@ function bindEvents() {
   });
 
   const runSampleFromLanding = () => {
+    runBotChainSampleFromLanding();
+  };
+
+  const runBotChainSampleFromLanding = () => {
     const landingNet = document.getElementById('landingNetwork') as HTMLSelectElement | null;
     const landingCa = document.getElementById('landingContract') as HTMLInputElement | null;
-    if (landingNet) landingNet.value = 'mainnet';
-    if (landingCa) landingCa.value = SAMPLE_MAINNET_CONTRACT;
+    if (landingNet) landingNet.value = 'botchain-mainnet';
+    if (landingCa) landingCa.value = SAMPLE_BOTCHAIN_CONTRACT;
     const enter = () => {
       const landing = document.getElementById('landing');
       landing?.classList.add('leaving');
@@ -1625,14 +2144,19 @@ function bindEvents() {
         document.getElementById('appShell')?.classList.add('app-visible');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         showPanel('overview');
-        loadSampleContract({ autoRead: true, enterFromLanding: false });
+        loadBotChainSampleContract({ autoRead: true, enterFromLanding: false });
       }, 420);
     };
     enter();
   };
+
   document.getElementById('landingTrySample')?.addEventListener('click', runSampleFromLanding);
+  document.getElementById('landingTryBotChain')?.addEventListener('click', runBotChainSampleFromLanding);
   document.getElementById('trySampleContract')?.addEventListener('click', () =>
     loadSampleContract({ autoRead: true }),
+  );
+  document.getElementById('tryBotChainSample')?.addEventListener('click', () =>
+    loadBotChainSampleContract({ autoRead: true }),
   );
   document.getElementById('trySampleInForm')?.addEventListener('click', () =>
     loadSampleContract({ autoRead: true }),
@@ -1663,7 +2187,7 @@ function bindEvents() {
     if (net) {
       const sel = document.getElementById('fieldNetwork') as HTMLSelectElement | null;
       if (sel) sel.value = net;
-      policy.draft.network = net as 'mainnet' | 'testnet';
+      policy.draft.network = (net || 'botchain-mainnet') as any;
     }
     if (ca) {
       const input = document.getElementById('fieldContract') as HTMLInputElement | null;
@@ -1747,6 +2271,11 @@ function bindEvents() {
   $('#openBrief')?.addEventListener('click', openBrief);
   $('#openBrief2')?.addEventListener('click', openBrief);
   $('#printBrief')?.addEventListener('click', () => window.print());
+  $('#exportReportBtn')?.addEventListener('click', exportReportJson);
+  $('#connectWalletBtn')?.addEventListener('click', () => void connectWallet());
+  $('#publishReceiptBtn')?.addEventListener('click', () => void publishVerificationReceipt());
+  $('#verifyIntegrityBtn')?.addEventListener('click', () => void handleVerifyIntegrity());
+  $('#clearIntegrityBtn')?.addEventListener('click', clearIntegrityVerification);
 
   $('#verifyForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1771,11 +2300,7 @@ function bindEvents() {
   $('#fieldNetwork')?.addEventListener('change', updateNetworkLabel);
   document.querySelectorAll('[data-network-switch]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const sel = $('#fieldNetwork') as HTMLSelectElement | null;
-      if (!sel) return;
-      sel.value = sel.value === 'mainnet' ? 'testnet' : 'mainnet';
-      updateNetworkLabel();
-      toast(`Network set to ${networkLabel(sel.value as 'mainnet' | 'testnet')}`);
+      toast('Network locked to BOT Chain Mainnet (Chain 677)');
     });
   });
 

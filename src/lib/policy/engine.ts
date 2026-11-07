@@ -8,6 +8,7 @@ import type {
   SkipReason,
   Verdict,
 } from './types';
+import { resolveChain } from '../chain/chains';
 import {
   addressesEqual,
   formatCodeHash,
@@ -148,7 +149,12 @@ function skipped(
 }
 
 function checkChainAndDeployer(m: ManifestFields, f: ObservedFacts, opts?: PolicyCheckOptions): CheckResult {
-  const expectedChain = m.network === 'mainnet' ? 196 : 1952;
+  let expectedChain: number;
+  try {
+    expectedChain = resolveChain(m.network || 'mainnet').id;
+  } catch {
+    expectedChain = m.network === 'testnet' ? 1952 : 196;
+  }
   const chainOk = f.chainId === expectedChain;
   const expectDeployer = normalizeAddress(m.expectedDeployer);
   const actualDeployer = f.deployer;
@@ -167,7 +173,7 @@ function checkChainAndDeployer(m: ManifestFields, f: ObservedFacts, opts?: Polic
         raw: String(f.chainId),
       },
       why: 'Verification ran against a different chain than the launch policy specifies.',
-      remediation: 'Select the correct X Layer network and re-run against the intended deployment.',
+      remediation: 'Select the correct network and re-run against the intended deployment.',
       severity: 'critical',
     };
   }
@@ -846,7 +852,12 @@ function checkAddressSanity(m: ManifestFields, f: ObservedFacts): CheckResult {
   }
 
   // Manifest network vs observed
-  const expectedChain = m.network === 'mainnet' ? 196 : 1952;
+  let expectedChain: number;
+  try {
+    expectedChain = resolveChain(m.network || 'mainnet').id;
+  } catch {
+    expectedChain = m.network === 'testnet' ? 1952 : 196;
+  }
   if (f.chainId !== expectedChain) {
     flags.push('chain_mismatch');
   }
@@ -883,7 +894,7 @@ function checkAddressSanity(m: ManifestFields, f: ObservedFacts): CheckResult {
     checkKey: 'address_sanity',
     status: 'blocked',
     title: 'Address and chain sanity',
-    expected: 'Valid non-placeholder addresses on the declared X Layer network',
+    expected: 'Valid non-placeholder addresses on the declared network',
     actual: unique.join(', '),
     evidence: {
       source: 'address heuristics + getCode + chainId',

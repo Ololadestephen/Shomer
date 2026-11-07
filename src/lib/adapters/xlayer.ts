@@ -25,11 +25,14 @@ import {
 import {
   EIP1967,
   ZERO_ADDRESS,
-  getXLayerChain,
-  type XLayerNetwork,
 } from '../chain/xlayer';
+import {
+  resolveChain,
+  isBotChain,
+} from '../chain/chains';
 import type {
   EvidenceRecord,
+  NetworkId,
   ObservedFacts,
   RoleObservation,
   VerificationStatus,
@@ -41,7 +44,7 @@ import {
 } from '../utils/address';
 
 export interface ReadFactsInput {
-  network: XLayerNetwork;
+  network: NetworkId | string;
   contractAddress: string;
   /**
    * Optional base for the creation-info proxy (default: same origin).
@@ -85,8 +88,8 @@ function nodeEnv(name: string): string | undefined {
   }
 }
 
-function chainShortName(network: XLayerNetwork): string {
-  return network === 'testnet' ? 'XLAYER_TESTNET' : 'XLAYER';
+function chainShortName(network: NetworkId | string): string {
+  return network === 'testnet' || network === 'xlayer-testnet' ? 'XLAYER_TESTNET' : 'XLAYER';
 }
 
 function parseDeployerPayload(
@@ -148,8 +151,8 @@ function toDeployerResult(
   };
 }
 
-function clientFor(network: XLayerNetwork): PublicClient {
-  const chain = getXLayerChain(network);
+function clientFor(network: NetworkId | string): PublicClient {
+  const chain = resolveChain(network);
   const urls = chain.rpcUrls.default.http;
   return createPublicClient({
     chain,
@@ -163,7 +166,7 @@ function clientFor(network: XLayerNetwork): PublicClient {
  * an unbounded recursive scan.
  */
 export async function inspectRelatedAddresses(input: {
-  network: XLayerNetwork;
+  network: NetworkId | string;
   addresses: string[];
   blockNumber: number;
 }): Promise<RelatedAddressInspection[]> {
@@ -888,12 +891,20 @@ async function enumerateAccessControlRoles(
  *        null (never fabricated).
  */
 async function fetchDeployer(
-  network: XLayerNetwork,
+  network: NetworkId | string,
   address: Address,
   rawCalls: EvidenceRecord[],
   readErrors: string[],
   proxyBase?: string,
+  chain?: { id: number; name: string },
 ): Promise<DeployerLookup> {
+  if (chain && isBotChain(chain.id)) {
+    rawCalls.push({
+      source: 'Deployer creation lookup (BOT Chain)',
+      note: 'BOT Chain does not use OKLink for creation-info; creation transaction unobserved onchain.',
+    });
+    return { deployer: null, txHash: null, deployBlock: null };
+  }
   // 1) Same-origin / configured proxy (browser + vite preview)
   const base =
     proxyBase?.replace(/\/$/, '') ||
@@ -1022,15 +1033,16 @@ async function fetchDeployer(
 }
 
 async function fetchVerification(
-  network: XLayerNetwork,
+  network: NetworkId | string,
   address: Address,
   explorerBase: string,
   rawCalls: EvidenceRecord[],
+  chain?: { id: number; name: string },
 ): Promise<VerificationStatus> {
-  const explorerUrl = `${explorerBase}/address/${address}`;
+  const explorerUrl = `${explorerBase.replace(/\/$/, '')}/address/${address}`;
 
   // Sourcify multi-chain check
-  const chainId = network === 'mainnet' ? 196 : 1952;
+  const chainId = chain?.id ?? (network === 'testnet' ? 1952 : 196);
   try {
     const sourcifyUrl = `https://sourcify.dev/server/v2/contract/${chainId}/${address}`;
     const res = await fetch(sourcifyUrl);
@@ -1071,12 +1083,13 @@ async function fetchVerification(
     rawCalls.push({ source: 'Sourcify', note: msg });
   }
 
+  const manualExplorer = chain && isBotChain(chain.id) ? 'BOTScan' : 'the OKX explorer';
   return {
     status: 'unknown',
     source: 'Sourcify',
     explorerUrl,
     details:
-      'Could not confirm verification status. Check the OKX explorer manually.',
+      `Could not confirm verification status. Check ${manualExplorer} manually.`,
     evidence: {
       source: 'Sourcify + explorer link',
       note: 'Verification status unknown — not treated as verified.',
@@ -1087,7 +1100,7 @@ async function fetchVerification(
 
 export async function readFacts(input: ReadFactsInput): Promise<ObservedFacts> {
   const network = input.network;
-  const chain = getXLayerChain(network);
+  const chain = resolveChain(network);
   const address = normalizeAddress(input.contractAddress);
   if (!address) {
     throw new Error('Invalid contract address. Provide a checksummed or hex EVM address.');
@@ -1310,12 +1323,15 @@ export async function readFacts(input: ReadFactsInput): Promise<ObservedFacts> {
     rawCalls,
     readErrors,
     input.proxyBase,
+    chain,
   );
+  const explorerUrl = chain.blockExplorers?.default?.url || 'https://scan.botchain.ai';
   const verification = await fetchVerification(
     network,
     address,
-    chain.blockExplorers.default.url,
+    explorerUrl,
     rawCalls,
+    chain,
   );
 
   const addressSanityFlags: string[] = [];
@@ -1360,7 +1376,7 @@ export async function readFacts(input: ReadFactsInput): Promise<ObservedFacts> {
   if (minterSet.size > 0) minterHolders = [...minterSet] as Address[];
 
   return {
-    network,
+    network: network as NetworkId,
     chainId,
     blockNumber: Number(blockNumber),
     timestamp: Number(block.timestamp),

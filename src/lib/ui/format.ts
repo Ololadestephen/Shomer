@@ -1,4 +1,4 @@
-import type { CheckResult, CheckStatus, Coverage, SkipReason, Verdict } from '../policy/types';
+import type { CheckResult, CheckStatus, Coverage, NetworkId, SkipReason, Verdict } from '../policy/types';
 
 export function verdictLabel(v: Verdict): string {
   switch (v) {
@@ -103,6 +103,26 @@ export function formatTime(iso: string): string {
   }
 }
 
-export function networkLabel(n: 'mainnet' | 'testnet'): string {
-  return n === 'mainnet' ? 'X Layer Mainnet' : 'X Layer Testnet';
+export function networkLabel(n: NetworkId | string, chainId?: number): string {
+  if (chainId === 677) return 'BOT Chain Mainnet';
+  if (chainId === 968) return 'BOT Chain Testnet';
+  if (chainId === 196) return 'X Layer Mainnet';
+  if (chainId === 1952 || chainId === 195) return 'X Layer Testnet';
+
+  switch (n) {
+    case 'botchain':
+    case 'botchain-mainnet':
+      return 'BOT Chain Mainnet';
+    case 'botchain-testnet':
+      return 'BOT Chain Testnet';
+    case 'xlayer':
+    case 'xlayer-mainnet':
+    case 'mainnet':
+      return 'X Layer Mainnet';
+    case 'xlayer-testnet':
+    case 'testnet':
+      return 'X Layer Testnet';
+    default:
+      return String(n);
+  }
 }

@@ -15,6 +15,7 @@ import {
   emptyManifest,
   type ManifestFieldKey,
   type ManifestFields,
+  type NetworkId,
   type ObservedFacts,
 } from '../src/lib/policy/types';
 import { normalizeAddress } from '../src/lib/utils/address';
@@ -73,7 +74,7 @@ export function hasExplicitApprovedPolicy(
  */
 function buildVerificationPolicy(input: {
   packId?: string;
-  network: 'mainnet' | 'testnet';
+  network: NetworkId;
   contractAddress: string;
   projectName?: string;
   policy?: Partial<ManifestFields>;
@@ -133,7 +134,7 @@ export async function runAgentShipGate(input: {
   /** @deprecated Ignored. Live-filled drafts are never used for verification. */
   usePackAsPolicy?: boolean;
 }, runOpts?: RunAgentShipGateOptions): Promise<{ status: number; body: Record<string, unknown> }> {
-  let network: 'mainnet' | 'testnet';
+  let network: NetworkId;
   try {
     network = parseAgentNetwork(input.network);
   } catch (error) {
