@@ -20,6 +20,7 @@ video/
 # Keep private working documentation local; publish only the product boundary.
 docs/*
 !docs/FREE-VS-PAID.md
+!docs/X-PARTNERSHIP-KIT.md
 
 .desloppify/
 scorecard.png
