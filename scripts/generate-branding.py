@@ -397,14 +397,16 @@ def generate_svg_cover():
 if __name__ == "__main__":
     print("Generating PFP and Cover images...")
 
-    # Generate PNGs
+    # Generate PNGs and JPEGs
     pfp_img = create_pfp(1024)
     pfp_img.save("public/shomer-x-pfp.png", "PNG")
-    print("✓ Saved public/shomer-x-pfp.png (1024x1024)")
+    pfp_img.convert("RGB").save("public/shomer-x-pfp.jpg", "JPEG", quality=95)
+    print("✓ Saved public/shomer-x-pfp.png & .jpg (1024x1024)")
 
     cover_img = create_cover(1500, 500)
     cover_img.save("public/shomer-x-cover.png", "PNG")
-    print("✓ Saved public/shomer-x-cover.png (1500x500)")
+    cover_img.convert("RGB").save("public/shomer-x-cover.jpg", "JPEG", quality=95)
+    print("✓ Saved public/shomer-x-cover.png & .jpg (1500x500)")
 
     # Generate SVGs
     with open("public/shomer-x-pfp.svg", "w") as f:

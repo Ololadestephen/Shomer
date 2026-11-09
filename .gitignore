@@ -21,6 +21,7 @@ video/
 docs/*
 !docs/FREE-VS-PAID.md
 !docs/X-PARTNERSHIP-KIT.md
+!docs/FOUR-WALLET-EVIDENCE.json
 
 .desloppify/
 scorecard.png
