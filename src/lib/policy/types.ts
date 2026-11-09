@@ -233,7 +233,7 @@ export interface ScanRun {
 export function emptyManifest(partial?: Partial<ManifestFields>): ManifestFields {
   return {
     projectName: '',
-    network: 'mainnet',
+    network: 'botchain-mainnet',
     contractAddress: '',
     expectedDeployer: '',
     owner: '',

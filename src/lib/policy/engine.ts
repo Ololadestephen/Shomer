@@ -209,7 +209,7 @@ function checkChainAndDeployer(m: ManifestFields, f: ObservedFacts, opts?: Polic
       'Policy declares an approved deployer, but Shomer could not observe the creation transaction.',
       'evidence_missing',
       'medium',
-      'Set OKLINK_API_KEY in .env and re-run via npm run dev (server proxy), or confirm deployer on the OKX explorer. Do not treat this as a pass.',
+      'Confirm deployer on BOTScan or declare expected deployer in the Launch Manifest. Do not treat this as a pass.',
     );
   }
 
@@ -931,7 +931,7 @@ function checkVerification(_m: ManifestFields, f: ObservedFacts): CheckResult {
       actual: 'Not verified on Sourcify',
       evidence: v.evidence,
       why: 'Unverified source makes independent review harder. This does not alone prove a policy mismatch.',
-      remediation: 'Verify the contract on the OKX explorer / Sourcify, then re-run.',
+      remediation: 'Verify the contract on BOTScan / Sourcify, then re-run.',
       severity: 'medium',
     };
   }
@@ -944,7 +944,7 @@ function checkVerification(_m: ManifestFields, f: ObservedFacts): CheckResult {
     'Verification status could not be confirmed from available public APIs.',
     'evidence_missing',
     'info',
-    `Check manually: ${v.explorerUrl ?? 'OKX explorer'}`,
+    `Check manually: ${v.explorerUrl ?? 'BOTScan'}`,
   );
 }
 

@@ -21,6 +21,7 @@ import { diffManifestFields } from './lib/policy/diff';
 import {
   clearAllShomerState,
   clearLastScan,
+  clearLastFacts,
   loadLastFacts,
   loadLastScan,
   loadPolicyState,
@@ -69,14 +70,26 @@ import {
 } from 'viem';
 
 let policy: PolicyState = loadPolicyState();
-if (!policy.draft.network || policy.draft.network === 'mainnet' || policy.draft.network === 'testnet') {
+if (!policy.draft.network || policy.draft.network !== 'botchain-mainnet') {
   policy.draft.network = 'botchain-mainnet';
+  savePolicyState(policy);
+}
+if (policy.approved && policy.approved.fields.network !== 'botchain-mainnet') {
+  policy.approved = null;
   savePolicyState(policy);
 }
 /** @deprecated use policy.draft — kept as alias for readability in forms */
 let manifest: ManifestFields = policy.draft;
-let lastScan: ScanRun | null = loadLastScan();
-let lastFacts: ObservedFacts | null = loadLastFacts();
+let lastScan: ScanRun | null = loadLastScan({ chainId: 677 });
+if (lastScan && (lastScan.facts.chainId !== 677 || lastScan.network !== 'botchain-mainnet')) {
+  lastScan = null;
+  clearLastScan();
+}
+let lastFacts: ObservedFacts | null = loadLastFacts({ chainId: 677 });
+if (lastFacts && (lastFacts.chainId !== 677 || lastFacts.network !== 'botchain-mainnet')) {
+  lastFacts = null;
+  clearLastFacts();
+}
 /** Filter for check list: status, or skip-reason subfilters. */
 let checkFilter: CheckStatus | 'all' | 'out_of_scope' | 'evidence_missing' = 'all';
 
@@ -926,7 +939,7 @@ function renderPrivilegeMap(f: ObservedFacts) {
         ? `tx ${shortAddress(f.deployTxHash, 4)}`
         : f.deployer
           ? 'creation-info'
-          : 'OKLink proxy or public API',
+          : 'BOTScan / creation-info',
     },
     {
       role: 'Owner',

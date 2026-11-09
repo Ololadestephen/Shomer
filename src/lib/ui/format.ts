@@ -112,15 +112,15 @@ export function networkLabel(n: NetworkId | string, chainId?: number): string {
   switch (n) {
     case 'botchain':
     case 'botchain-mainnet':
+    case 'mainnet':
       return 'BOT Chain Mainnet';
     case 'botchain-testnet':
+    case 'testnet':
       return 'BOT Chain Testnet';
     case 'xlayer':
     case 'xlayer-mainnet':
-    case 'mainnet':
       return 'X Layer Mainnet';
     case 'xlayer-testnet':
-    case 'testnet':
       return 'X Layer Testnet';
     default:
       return String(n);

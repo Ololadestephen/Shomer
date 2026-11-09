@@ -11,7 +11,7 @@
   The automated deployment verification & ship-gate registry for @botchain_ai.
   Verify ownership, proxies, and bytecode before you ship or trust. No fake passes.
   ```
-- **Website**: `https://shomer-ui.pages.dev` (or your production Vercel / domain)
+- **Website**: `https://shomer-blush.vercel.app`
 - **Location**: `BOT Chain Mainnet (677)`
 
 ---
@@ -36,7 +36,7 @@ Shomer compares live chain evidence with your declared launch policy and issues 
 ⚡ ShomerVerificationRegistry is now LIVE on BOT Chain Mainnet:
 📍 Contract: 0xc427474201895710c653105067c543f184c99fa3
 🔍 BOTScan: https://scan.botchain.ai/address/0xc427474201895710c653105067c543f184c99fa3
-🌐 Web App: https://shomer-ui.pages.dev
+🌐 Web App: https://shomer-blush.vercel.app
 💻 Open Source: https://github.com/Ololadestephen/Shomer
 
 Ship what you approved. Never rely on vibes. 🤖⛓️
@@ -72,7 +72,7 @@ How does Shomer verify deployments on @botchain_ai without simulating or inventi
 3️⃣ Check — Compare the live chain against the frozen version.
 4️⃣ Receipt — Publish an immutable cryptographic verification receipt on BOT Chain.
 
-Explore the loop live: https://shomer-ui.pages.dev 🚀
+Explore the loop live: https://shomer-blush.vercel.app 🚀
 
 #Web3 #SmartContracts #BOTChain
 ```
@@ -87,7 +87,7 @@ We never turn missing facts into a false pass.
 
 A Shomer receipt attests immutable publication and integrity—not empty marketing. 
 
-Check your contracts on @botchain_ai: https://shomer-ui.pages.dev
+Check your contracts on @botchain_ai: https://shomer-blush.vercel.app
 
 #Blockchain #SecurityFirst
 ```
